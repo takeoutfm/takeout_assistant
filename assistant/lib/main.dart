@@ -1,8 +1,24 @@
+// Copyright 2023 defsub
+//
+// This file is part of Takeout.
+//
+// Takeout is free software: you can redistribute it and/or modify it under the
+// terms of the GNU Affero General Public License as published by the Free
+// Software Foundation, either version 3 of the License, or (at your option)
+// any later version.
+//
+// Takeout is distributed in the hope that it will be useful, but WITHOUT ANY
+// WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+// FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for
+// more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
+
 import 'package:assistant/context/bloc.dart';
 import 'package:assistant/context/context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lava_clock/model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,53 +37,7 @@ class AssistantApp extends StatelessWidget {
         child: MaterialApp(
             home: Stack(fit: StackFit.expand, children: [
           AssistantClock(),
-          Align(
-              alignment: Alignment.bottomLeft,
-              child: SpeechButton(
-                onPressed: _onNuman,
-                text: 'Numan',
-              )),
-          Align(
-              alignment: Alignment.bottomCenter,
-              child: SpeechButton(
-                onPressed: _torchOn,
-                text: 'Play',
-              )),
-          Align(
-              alignment: Alignment.topCenter,
-              child: SpeechButton(
-                onPressed: _torchOff,
-                text: 'Pause',
-              )),
-          Align(
-              alignment: Alignment.bottomRight,
-              child: SpeechButton(
-                onPressed: _onAlbum,
-                text: 'Album',
-              ))
         ])));
-  }
-
-  void _torchOn(BuildContext context) {
-    context.speech.awake();
-    context.speech.text('play');
-    // context.clock.repository.setPaused(true);
-  }
-
-  void _torchOff(BuildContext context) {
-    context.speech.awake();
-    context.speech.text('pause');
-    // context.clock.repository.setPaused(false);
-  }
-
-  void _onNuman(BuildContext context) {
-    context.speech.awake();
-    context.speech.text('play songs by gary numan');
-  }
-
-  void _onAlbum(BuildContext context) {
-    context.speech.awake();
-    context.speech.text('play album one more time');
   }
 }
 
