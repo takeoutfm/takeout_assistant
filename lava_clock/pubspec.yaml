@@ -1,0 +1,23 @@
+name: lava_clock
+description: Lava Clock
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.1
+  intl: ^0.18.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Rubik
+      fonts:
+        - asset: third_party/Rubik-Medium.ttf
