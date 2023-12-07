@@ -9,6 +9,25 @@ Features include:
 - Vosk speech recognition (english small model)
 - Torch/flashlight on/off
 
+English voice commands:
+
+- play songs by [artist]
+- play [artist] songs
+- play tracks by [artist]
+- play [artist] tracks
+- play [artist] radio
+- play popular songs by [artist]
+- play [artist] popular songs
+- play album [album]
+- play song [song]
+- play
+- pause
+- next
+- flash|torch on|off
+- turn flash|torch on|off
+- turn on|off flash|torch
+- turn on|off the flash|torch
+
 Lava Clock originally available at https://github.com/jamesblasco/flutter_lava_clock. It has been updated for the latest Flutter and Dart versions.
 
 Vosk is available at https://alphacephei.com/vosk/. 
