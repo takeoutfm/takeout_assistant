@@ -64,7 +64,7 @@ class EnglishIntents extends IntentLanguage {
           required: ['play', 'popular'],
           regexps: [
             RegExp(r'^play popular songs by ((?<artist>[\w ]+))$'),
-            RegExp(r'^play ((?<artist>[\w ]+)) popular songs$'),
+            RegExp(r'^play ((?<artist>[\w ]+)) popular( songs)?$'),
           ],
         ),
         IntentModel(
