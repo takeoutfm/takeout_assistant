@@ -19,6 +19,7 @@ import 'package:assistant/ambient/light.dart';
 import 'package:assistant/audio/volume.dart';
 import 'package:assistant/clock/clock.dart';
 import 'package:assistant/playing/playing.dart';
+import 'package:assistant/settings/settings.dart';
 import 'package:assistant/speech/speech.dart';
 import 'package:assistant/torch/light.dart';
 import 'package:flutter/material.dart';
@@ -36,4 +37,6 @@ extension AppContext on BuildContext {
   TorchLightCubit get torch => read<TorchLightCubit>();
 
   ClockCubit get clock => read<ClockCubit>();
+
+  SettingsCubit get settings => read<SettingsCubit>();
 }

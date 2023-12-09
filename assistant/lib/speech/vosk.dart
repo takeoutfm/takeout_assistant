@@ -18,6 +18,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:assistant/settings/repository.dart';
 import 'package:vosk_flutter/vosk_flutter.dart';
 import 'speech.dart';
 
@@ -30,12 +31,13 @@ class VoskSpeechProvider implements SpeechProvider {
 
   static const _modelName = 'assets/models/vosk-model-small-en-us-0.15.zip';
   static const _sampleRate = 16000;
+  static const _awakeDuration = Duration(seconds: 5);
 
-  final List<String> wakeWords;
+  final SettingsRepository settingsRepository;
   final Duration awakeDuration;
 
-  VoskSpeechProvider(this.wakeWords,
-      {this.awakeDuration = const Duration(seconds: 5)});
+  VoskSpeechProvider(this.settingsRepository,
+      {this.awakeDuration = _awakeDuration});
 
   void init() async {
     try {
@@ -51,6 +53,7 @@ class VoskSpeechProvider implements SpeechProvider {
       _speechService?.onResult().listen((event) {
         final data = jsonDecode(event) as Map<String, dynamic>;
         final text = data['text'] as String?;
+        final wakeWords = settingsRepository.settings?.wakeWords ?? ['computer'];
         if (text != null && text.isNotEmpty) {
           if (awakeTimer == null || awakeTimer?.isActive == false) {
             if (wakeWords.contains(text)) {

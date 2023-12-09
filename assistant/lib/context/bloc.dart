@@ -17,23 +17,25 @@
 
 import 'dart:io';
 
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:assistant/ambient/light.dart';
+import 'package:assistant/audio/volume.dart';
 import 'package:assistant/clock/clock.dart';
+import 'package:assistant/context/context.dart';
+import 'package:assistant/playing/playing.dart';
+import 'package:assistant/settings/model.dart';
+import 'package:assistant/settings/repository.dart';
+import 'package:assistant/settings/settings.dart';
+import 'package:assistant/speech/intent.dart';
+import 'package:assistant/speech/speech.dart';
 import 'package:assistant/torch/light.dart';
 import 'package:flutter/material.dart' hide Intent;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:nested/nested.dart';
 import 'package:path_provider/path_provider.dart';
-
-import 'package:assistant/ambient/light.dart';
-import 'package:assistant/speech/speech.dart';
-import 'package:assistant/playing/playing.dart';
-import 'package:assistant/audio/volume.dart';
-import 'package:assistant/context/context.dart';
-import 'package:assistant/speech/intent.dart';
-import 'package:android_intent_plus/android_intent.dart';
-import 'package:just_audio/just_audio.dart';
 
 class AppBloc {
   static late Directory _appDir;
@@ -69,8 +71,10 @@ class AppBloc {
   }
 
   List<SingleChildWidget> repositories(Directory directory) {
+    final settingsRepository = SettingsRepository();
     final ambientLightRepository = AmbientLightRepository();
-    final speechRepository = SpeechRepository();
+    final speechRepository =
+        SpeechRepository(settingsRepository: settingsRepository);
     final playingRepository = PlayingRepository();
     final volumeRepository = VolumeRepository();
     final torchRepository = TorchLightRepository();
@@ -83,11 +87,19 @@ class AppBloc {
       RepositoryProvider(create: (_) => volumeRepository),
       RepositoryProvider(create: (_) => torchRepository),
       RepositoryProvider(create: (_) => clockRepository),
+      RepositoryProvider(create: (_) => settingsRepository),
     ];
   }
 
   List<SingleChildWidget> blocs() {
     return [
+      BlocProvider(
+          lazy: false,
+          create: (context) {
+            final settings = SettingsCubit();
+            context.read<SettingsRepository>().init(settings);
+            return settings;
+          }),
       BlocProvider(
         lazy: false,
         create: (context) =>
@@ -110,7 +122,17 @@ class AppBloc {
       ),
       BlocProvider(
         lazy: false,
-        create: (context) => ClockCubit(context.read<ClockRepository>()),
+        create: (context) =>
+            ClockCubit(context.read<ClockRepository>()),
+      ),
+      BlocProvider(
+        lazy: false,
+        create: (context) {
+          final settings = SettingsCubit();
+          context.read<SettingsRepository>().init(settings);
+          context.read<ClockRepository>().init(settings);
+          return settings;
+        }
       ),
     ];
   }

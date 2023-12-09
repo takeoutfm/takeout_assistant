@@ -17,6 +17,7 @@
 
 import 'dart:async';
 
+import 'package:assistant/settings/repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'vosk.dart';
 
@@ -75,11 +76,12 @@ class TextEvent extends SpeechEvent {
 
 class SpeechRepository {
   final SpeechProvider _provider;
+  final SettingsRepository settingsRepository;
 
-  SpeechRepository({SpeechProvider? provider})
-      // : _provider = provider ?? PicovoiceSpeechProvider() {
-      : _provider =
-            provider ?? VoskSpeechProvider(['computer', 'alexa']) {
+  SpeechRepository(
+      {SpeechProvider? provider,
+      required this.settingsRepository})
+      : _provider = provider ?? VoskSpeechProvider(settingsRepository) {
     _init();
   }
 
