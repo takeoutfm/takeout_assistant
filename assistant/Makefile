@@ -33,7 +33,7 @@ RELEASE_APK = ./build/app/outputs/flutter-apk/app-release.apk
 
 DEBUG_APK = ./build/app/outputs/flutter-apk/app-debug.apk
 
-.PHONY: build apk
+.PHONY: build apk assets
 
 all: apk
 

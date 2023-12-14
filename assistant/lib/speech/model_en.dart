@@ -15,10 +15,36 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'intent.dart';
+import 'model.dart';
 
-class EnglishIntents extends IntentLanguage {
+class EnglishModel extends SpeechModel {
   String get language => 'en';
+
+  static final Map<String, double> _volumeTable = {
+    // numbers
+    'zero': 0,
+    'one': 0.1,
+    'two': 0.2,
+    'three': 0.3,
+    'four': 0.4,
+    'five': 0.5,
+    'six': 0.6,
+    'seven': 0.7,
+    'eight': 0.8,
+    'nine': 0.9,
+    'ten': 1.0,
+    'eleven': 1.0,
+    // others
+    'min': 0.0,
+    'off': 0.0,
+    'mute': 0.0,
+    'low': 0.3,
+    'max': 1.0,
+  };
+
+  double? volume(String word) {
+    return _volumeTable[word];
+  }
 
   List<IntentModel> get intents => [
         IntentModel(
@@ -213,6 +239,31 @@ class EnglishIntents extends IntentLanguage {
           required: ['next'],
           regexps: [
             RegExp(r'^next$'),
+          ],
+        ),
+        IntentModel(
+          name: Intent.volume_up,
+          keywords: ['turn', 'it', 'up'],
+          required: ['turn', 'it', 'up'],
+          regexps: [
+            RegExp(r'^turn it up$'),
+          ],
+        ),
+        IntentModel(
+          name: Intent.volume_down,
+          keywords: ['turn', 'it', 'down'],
+          required: ['turn', 'it', 'down'],
+          regexps: [
+            RegExp(r'^turn it down$'),
+          ],
+        ),
+        IntentModel(
+          name: Intent.volume,
+          fields: ['volume'],
+          keywords: ['volume'],
+          required: ['volume'],
+          regexps: [
+            RegExp(r'^(set )?volume (to )?((?<volume>[\w ]+))$'),
           ],
         ),
       ];

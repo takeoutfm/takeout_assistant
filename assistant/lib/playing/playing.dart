@@ -52,8 +52,7 @@ class PlayingCubit extends Cubit<PlayingState> {
   }
 
   void _init() async {
-    await repository.start();
-    repository.stream.listen((event) {
+    (await repository.stream).listen((event) {
       _emit(event);
     });
   }
@@ -81,21 +80,26 @@ class PlayingRepository {
   StreamSubscription<NowPlayingTrack>? _subscription;
   NowPlayingTrack? _track;
   NowPlaying _nowPlaying;
+  late Future<void> _initialized;
 
   PlayingRepository() : _nowPlaying = NowPlaying.instance {
-    start();
+    _initialized = _initialize();
   }
 
-  Future<void> start() async {
-    bool result = await NowPlaying.instance.requestPermissions();
-    if (result) {
-      await _nowPlaying.start();
-      dispose();
-      _subscription = stream.listen((track) {
-        _track = track;
-        print('repo got $track');
-      });
+  Future<void> _initialize() async {
+    bool enabled = await _nowPlaying.isEnabled();
+    if (!enabled) {
+      bool result = await _nowPlaying.requestPermissions();
+      if (result) {
+        print('requestPerms result is $result');
+      }
     }
+    await _nowPlaying.start();
+    dispose();
+    _subscription = (await stream).listen((track) {
+      _track = track;
+      print('repo got $track');
+    });
   }
 
   void stop() {
@@ -106,7 +110,10 @@ class PlayingRepository {
     _subscription?.cancel();
   }
 
-  Stream<NowPlayingTrack> get stream => _nowPlaying.stream;
+  Future<Stream<NowPlayingTrack>> get stream async {
+    await _initialized;
+    return _nowPlaying.stream;
+  }
 
   NowPlayingTrack? get track => _track;
 }

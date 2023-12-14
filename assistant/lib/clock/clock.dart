@@ -17,7 +17,8 @@
 
 import 'dart:async';
 
-import 'package:assistant/settings/settings.dart';
+import 'package:assistant/settings/model.dart';
+import 'package:assistant/settings/repository.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lava_clock/frame.dart';
@@ -92,10 +93,17 @@ class ClockRepository {
   ClockRepository({ClockProvider? provider})
       : _provider = provider ?? LavaClockProvider();
 
-  void init(SettingsCubit settings) {
-    settings.stream.listen((event) {
-      _provider.use24HourClock(event.settings.use24HourClock);
+  void init(SettingsRepository settingsRepository) {
+    _updateSettings(settingsRepository.settings);
+    settingsRepository.stream?.listen((settings) {
+      _updateSettings(settings);
     });
+  }
+
+  void _updateSettings(Settings? settings) {
+    if (settings != null) {
+      _provider.use24HourClock(settings.use24HourClock);
+    }
   }
 
   void listen(Stream<ClockState> stream) {

@@ -32,6 +32,7 @@ class VoskSpeechProvider implements SpeechProvider {
   static const _modelName = 'assets/models/vosk-model-small-en-us-0.15.zip';
   static const _sampleRate = 16000;
   static const _awakeDuration = Duration(seconds: 5);
+  static const _filterWords = ['he', 'huh', 'it']; // noise words from vox
 
   final SettingsRepository settingsRepository;
   final Duration awakeDuration;
@@ -43,38 +44,11 @@ class VoskSpeechProvider implements SpeechProvider {
     try {
       final loader = ModelLoader();
       final path = await loader.loadFromAssets(_modelName);
-      print(path);
       final model = await _vosk.createModel(path);
-      print(model);
       final recognizer =
           await _vosk.createRecognizer(model: model, sampleRate: _sampleRate);
-      print(recognizer);
       _speechService = await _vosk.initSpeechService(recognizer);
-      _speechService?.onResult().listen((event) {
-        final data = jsonDecode(event) as Map<String, dynamic>;
-        final text = data['text'] as String?;
-        final wakeWords = settingsRepository.settings?.wakeWords ?? ['computer'];
-        if (text != null && text.isNotEmpty) {
-          if (awakeTimer == null || awakeTimer?.isActive == false) {
-            if (wakeWords.contains(text)) {
-              print('wakeword1: $text');
-              _onWakeWord();
-            } else {
-              final words = text.split(' ');
-              if (words.length > 1 && wakeWords.contains(words.first)) {
-                print('wakeword2: $text');
-                _onWakeWord();
-                words.removeAt(0);
-                _onText(words.join(' '));
-              } else {
-                print('ignore $text');
-              }
-            }
-          } else if (awakeTimer != null && awakeTimer?.isActive == true) {
-            _onText(text);
-          }
-        }
-      });
+      _speechService?.onResult().listen((event) => _onResult(event));
       // _speechService?.onPartial().listen((event) {
       //   print('partial $event');
       // });
@@ -83,6 +57,64 @@ class VoskSpeechProvider implements SpeechProvider {
       print(e);
       print(stack);
     }
+  }
+
+  void _onResult(String event) {
+    final data = jsonDecode(event) as Map<String, dynamic>;
+    var text = data['text'] as String? ?? '';
+    text = text.trim();
+    final wakeWords = settingsRepository.settings?.wakeWords ?? ['take out'];
+    if (text.isNotEmpty) {
+      if (awakeTimer == null || awakeTimer?.isActive == false) {
+        if (wakeWords.contains(text)) {
+          // wake word only, text later
+          print('wakeword1: $text');
+          _onWakeWord();
+        } else {
+          // wake word and text
+          final words = _processText(text);
+          if (words.isNotEmpty) {
+            var matched = false;
+            for (var ww in wakeWords) {
+              final n = ww.split(' ').length;
+              if (words.length > n) {
+                if (text.startsWith(ww)) {
+                  print('wakeword2: $text');
+                  _onWakeWord();
+                  words.removeRange(0, n);
+                  _onText(words.join(' '));
+                  matched = true;
+                  break;
+                }
+              }
+            }
+            if (!matched) {
+              print('ignore $text');
+            }
+          }
+        }
+      } else if (awakeTimer != null && awakeTimer?.isActive == true) {
+        final words = _processText(text);
+        if (words.isNotEmpty) {
+          _onText(words.join(' '));
+        }
+      }
+    }
+  }
+
+  List<String> _processText(String text) {
+    final words = text.split(' ');
+    if (words.isNotEmpty) {
+      for (var f in _filterWords) {
+        if (words.first == f) {
+          words.removeAt(0);
+          if (words.isEmpty) {
+            break;
+          }
+        }
+      }
+    }
+    return words;
   }
 
   void _onWakeWord() {

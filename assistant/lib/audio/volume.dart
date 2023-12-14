@@ -59,9 +59,18 @@ class VolumeRepository {
   void listener(Function(double) callback) =>
     _provider.listener(callback);
 
-  void setVolume(double volume) => _provider.setVolume(volume);
+  void setVolume(double volume) => _provider.setVolume(_checkVolume(volume));
 
   Future<double> getVolume() => _provider.getVolume();
+
+  double _checkVolume(double volume) {
+    if (volume < 0) {
+      volume = 0;
+    } else if (volume > 1.0) {
+      volume = 1.0;
+    }
+    return volume;
+  }
 }
 
 abstract class VolumeProvider {

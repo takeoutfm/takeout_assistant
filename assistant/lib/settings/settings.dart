@@ -48,6 +48,10 @@ class SettingsCubit extends HydratedCubit<SettingsState> {
     emit(SettingsState(state.settings.copyWith(wakeWords: wakeWords)));
   }
 
+  set use24HourClock(bool value) {
+    emit(SettingsState(state.settings.copyWith(use24HourClock: value)));
+  }
+
   @override
   SettingsState fromJson(Map<String, dynamic> json) =>
       SettingsState.fromJson(json['settings'] as Map<String, dynamic>);

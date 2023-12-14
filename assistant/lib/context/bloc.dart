@@ -23,10 +23,9 @@ import 'package:assistant/audio/volume.dart';
 import 'package:assistant/clock/clock.dart';
 import 'package:assistant/context/context.dart';
 import 'package:assistant/playing/playing.dart';
-import 'package:assistant/settings/model.dart';
 import 'package:assistant/settings/repository.dart';
 import 'package:assistant/settings/settings.dart';
-import 'package:assistant/speech/intent.dart';
+import 'package:assistant/speech/model.dart';
 import 'package:assistant/speech/speech.dart';
 import 'package:assistant/torch/light.dart';
 import 'package:flutter/material.dart' hide Intent;
@@ -122,23 +121,24 @@ class AppBloc {
       ),
       BlocProvider(
         lazy: false,
-        create: (context) =>
-            ClockCubit(context.read<ClockRepository>()),
+        create: (context) => ClockCubit(context.read<ClockRepository>()),
       ),
       BlocProvider(
-        lazy: false,
-        create: (context) {
-          final settings = SettingsCubit();
-          context.read<SettingsRepository>().init(settings);
-          context.read<ClockRepository>().init(settings);
-          return settings;
-        }
-      ),
+          lazy: false,
+          create: (context) {
+            final settings = SettingsCubit();
+            context.read<SettingsRepository>().init(settings);
+            context
+                .read<ClockRepository>()
+                .init(context.read<SettingsRepository>());
+            return settings;
+          }),
     ];
   }
 
   List<SingleChildWidget> listeners(BuildContext context) {
-    final intents = SpeechIntents();
+    final intents = SpeechModels();
+    final language = 'en';
     return [
       BlocListener<AmbientLightCubit, AmbientLightState>(
           listener: (context, state) {
@@ -166,9 +166,10 @@ class AppBloc {
             } else {
               print('speech asleep [${state.text}]');
               context.clock.resume();
-              final intent = intents.match('en', state.text);
+              final intent = intents.match(language, state.text);
               // context.volume.setVolume(context.volume.state.previousVolume);
               if (intent != null) {
+                print('intent name is ${intent.name}');
                 acknowledge().then((_) {
                   String? action = _intent2action[intent.name];
                   print('action is $action');
@@ -183,12 +184,53 @@ class AppBloc {
                     context.torch.enable();
                   } else if (intent.name == Intent.torch_off) {
                     context.torch.disable();
+                  } else if (intent.name == Intent.volume_up) {
+                    volumeUp(context);
+                  } else if (intent.name == Intent.volume_down) {
+                    volumeDown(context);
+                  } else if (intent.name == Intent.volume) {
+                    final value = intent.fields['volume'];
+                    if (value != null) {
+                      final volume = intents.volume(language, value);
+                      if (volume != null) {
+                        setVolume(context, volume);
+                      }
+                    }
                   }
                 });
+              } else {
+                print('intent not found');
               }
             }
           }),
     ];
+  }
+
+  void volumeUp(BuildContext context) {
+    final factor = 0.4;
+    var v = context.volume.state.volume;
+    if (v == 0) {
+      v = factor;
+    } else {
+      v += v * factor;
+    }
+    print('volume up $v');
+    context.volume.setVolume(v);
+  }
+
+  void volumeDown(BuildContext context) {
+    final factor = 0.25;
+    var v = context.volume.state.volume;
+    v -= v * factor;
+    if (v < 0) {
+      v = 0;
+    }
+    print('volume down $v');
+    context.volume.setVolume(v);
+  }
+
+  void setVolume(BuildContext context, double volume) {
+    context.volume.setVolume(volume);
   }
 
   Future<void> acknowledge() async {

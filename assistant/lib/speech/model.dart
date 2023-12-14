@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'intent_en.dart';
+import 'model_en.dart';
 
 class Intent {
   static const play_artist_songs = 'play_artist_songs';
@@ -28,6 +28,9 @@ class Intent {
   static const player_play = 'player_play';
   static const player_pause = 'player_pause';
   static const player_next = 'player_next';
+  static const volume = 'volume';
+  static const volume_up = 'volume_up';
+  static const volume_down = 'volume_down';
   static const torch_on = 'torch_on';
   static const torch_off = 'torch_off';
 
@@ -53,21 +56,36 @@ class IntentModel {
   });
 }
 
-abstract class IntentLanguage {
+abstract class SpeechModel {
   String get language;
 
   List<IntentModel> get intents;
+
+  double? volume(String word);
 }
 
-class SpeechIntents {
-  final _intents = <String, List<IntentModel>>{};
+class SpeechModels {
+  final _models = <String, SpeechModel>{};
 
-  SpeechIntents() {
-    register(EnglishIntents());
+  SpeechModels() {
+    final list = [
+      EnglishModel(),
+    ];
+    for (var l in list) {
+      register(l);
+    }
   }
 
-  void register(IntentLanguage lang) {
-    _intents[lang.language] = lang.intents;
+  void register(SpeechModel model) {
+    _models[model.language] = model;
+  }
+
+  double? volume(String language, String word) {
+    final model = _models[language];
+    if (model == null) {
+      return null;
+    }
+    return model.volume(word);
   }
 
   Map<String, String> extract(String phrase, RegExp regex) {
@@ -92,12 +110,12 @@ class SpeechIntents {
 
   Intent? match(String language, String phrase) {
     Intent? result;
-    final intents = _intents[language];
-    if (intents == null) {
+    final model = _models[language];
+    if (model == null) {
       return result;
     }
     final words = phrase.split(' ');
-    for (var i in intents) {
+    for (var i in model.intents) {
       var hits = 0;
       var required = 0;
       for (var w in words) {
@@ -132,4 +150,3 @@ class SpeechIntents {
     return result;
   }
 }
-

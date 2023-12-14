@@ -73,8 +73,7 @@ fi
 major=`echo $version | cut -d. -f 1`
 minor=`echo $version | cut -d. -f 2`
 patch=`echo $version | cut -d. -f 3`
-build=0 # not used (yet)
-versionCode=$((major*10000 + minor*1000 + patch*100 + build))
+versionCode=$((major*10000 + minor*100 + patch))
 
 # find files with version patterns
 find . -type f | xargs egrep -l -E "${pattern}" | while read f

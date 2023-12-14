@@ -27,7 +27,7 @@ class Settings {
   Settings({required this.wakeWords, required this.use24HourClock});
 
   factory Settings.initial() => Settings(
-        wakeWords: ['computer'],
+        wakeWords: ['take out'],
         use24HourClock: false,
       );
 

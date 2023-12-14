@@ -9,7 +9,8 @@ Features include:
 - Lava Clock from the Flutter 2020 clock challenge (@jamesblasco)
 - Vosk offline speech recognition (english small model)
 - Torch/flashlight on/off
-- [GMS](https://en.wikipedia.org/wiki/Google_Mobile_Services) is not required
+- [GMS](https://en.wikipedia.org/wiki/Google_Mobile_Services) is not required 
+- Works with AOSP-based systems like [LineageOS](https://lineageos.org/)
 
 See [SPEECH.md](assistant/SPEECH.md) for recognized speech commands and supported languages.
 

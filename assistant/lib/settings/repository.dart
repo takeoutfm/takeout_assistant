@@ -25,9 +25,9 @@ class SettingsRepository {
     this.cubit = cubit;
   }
 
-  // Stream<Settings>? get stream {
-  //   return cubit?.stream.map((state) => state.settings);
-  // }
+  Stream<Settings>? get stream {
+    return cubit?.stream.map((state) => state.settings);
+  }
 
   Settings? get settings {
     return cubit?.state.settings;
