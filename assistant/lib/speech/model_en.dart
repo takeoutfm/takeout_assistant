@@ -46,6 +46,40 @@ class EnglishModel extends SpeechModel {
     return _volumeTable[word];
   }
 
+  String? describe(Intent intent) {
+    switch (intent.name) {
+      case Intent.play_artist_album:
+        return 'playing ${intent.fields['album']}';
+      case Intent.play_artist_popular_songs:
+        return 'popular ${intent.fields['artist']}';
+      case Intent.play_artist_radio:
+        return 'radio ${intent.fields['artist']}';
+      case Intent.play_artist_song:
+        return 'playing ${intent.fields['song']}';
+      case Intent.play_artist_songs:
+        return 'playing ${intent.fields['artist']}';
+      case Intent.play_album:
+        return 'playing ${intent.fields['album']}';
+      case Intent.play_song:
+        return 'playing ${intent.fields['song']}';
+      case Intent.player_play:
+        return 'playing';
+      case Intent.player_pause:
+        return 'pausing';
+      case Intent.volume:
+        return 'volume ${intent.fields['volume']}';
+      case Intent.volume_up:
+        return 'volume up';
+      case Intent.volume_down:
+        return 'volume down';
+      case Intent.torch_on:
+        return 'light on';
+      case Intent.torch_off:
+        return 'light off';
+    }
+    return null;
+  }
+
   List<IntentModel> get intents => [
         IntentModel(
           name: Intent.play_artist_songs,

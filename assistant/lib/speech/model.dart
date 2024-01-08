@@ -61,6 +61,8 @@ abstract class SpeechModel {
 
   List<IntentModel> get intents;
 
+  String? describe(Intent intent);
+
   double? volume(String word);
 }
 
@@ -86,6 +88,14 @@ class SpeechModels {
       return null;
     }
     return model.volume(word);
+  }
+
+  String? describe(String language, Intent intent) {
+    final model = _models[language];
+    if (model == null) {
+      return null;
+    }
+    return model.describe(intent);
   }
 
   Map<String, String> extract(String phrase, RegExp regex) {

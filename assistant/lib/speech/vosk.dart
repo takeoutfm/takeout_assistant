@@ -63,41 +63,56 @@ class VoskSpeechProvider implements SpeechProvider {
     final data = jsonDecode(event) as Map<String, dynamic>;
     var text = data['text'] as String? ?? '';
     text = text.trim();
-    final wakeWords = settingsRepository.settings?.wakeWords ?? ['take out'];
+    final wakeWords = settingsRepository.settings?.wakeWords;
     if (text.isNotEmpty) {
-      if (awakeTimer == null || awakeTimer?.isActive == false) {
-        if (wakeWords.contains(text)) {
-          // wake word only, text later
-          print('wakeword1: $text');
-          _onWakeWord();
-        } else {
-          // wake word and text
-          final words = _processText(text);
-          if (words.isNotEmpty) {
-            var matched = false;
-            for (var ww in wakeWords) {
-              final n = ww.split(' ').length;
-              if (words.length > n) {
-                if (text.startsWith(ww)) {
-                  print('wakeword2: $text');
-                  _onWakeWord();
-                  words.removeRange(0, n);
-                  _onText(words.join(' '));
-                  matched = true;
-                  break;
-                }
-              }
-            }
-            if (!matched) {
-              print('ignore $text');
-            }
-          }
-        }
-      } else if (awakeTimer != null && awakeTimer?.isActive == true) {
+      if (wakeWords != null && wakeWords.isNotEmpty) {
+        _handleWakeWords(wakeWords, text);
+      } else {
+        _handleText(text);
+      }
+    }
+  }
+
+  void _handleText(String text) {
+    final words = _processText(text);
+    if (words.isNotEmpty) {
+      _onText(words.join(' '));
+    }
+  }
+
+  void _handleWakeWords(List<String> wakeWords, String text) {
+    if (awakeTimer == null || awakeTimer?.isActive == false) {
+      if (wakeWords.contains(text)) {
+        // wakeWord only, text later
+        print('wakeword1: $text');
+        _onWakeWord();
+      } else {
+        // wakeWord followed by text
         final words = _processText(text);
         if (words.isNotEmpty) {
-          _onText(words.join(' '));
+          var matched = false;
+          for (var ww in wakeWords) {
+            final n = ww.split(' ').length;
+            if (words.length > n) {
+              if (text.startsWith(ww)) {
+                print('wakeword2: $text');
+                _onWakeWord();
+                words.removeRange(0, n);
+                _onText(words.join(' '));
+                matched = true;
+                break;
+              }
+            }
+          }
+          if (!matched) {
+            print('ignore $text');
+          }
         }
+      }
+    } else if (awakeTimer != null && awakeTimer?.isActive == true) {
+      final words = _processText(text);
+      if (words.isNotEmpty) {
+        _onText(words.join(' '));
       }
     }
   }

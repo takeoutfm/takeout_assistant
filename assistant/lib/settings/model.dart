@@ -21,27 +21,44 @@ part 'model.g.dart';
 
 @JsonSerializable()
 class Settings {
+  static const defaultWakeWords = <String>[];
+  static const defaultLanguage = 'en';
+
   final List<String> wakeWords;
   final bool use24HourClock;
+  final String language;
 
-  Settings({required this.wakeWords, required this.use24HourClock});
+  Settings(
+      {required this.wakeWords,
+      required this.use24HourClock,
+      this.language = defaultLanguage});
 
   factory Settings.initial() => Settings(
-        wakeWords: ['take out'],
+        wakeWords: defaultWakeWords,
         use24HourClock: false,
+        language: defaultLanguage,
       );
 
   Settings copyWith({
     List<String>? wakeWords,
     bool? use24HourClock,
-  }) =>
-      Settings(
-        wakeWords: wakeWords ?? this.wakeWords,
-        use24HourClock: use24HourClock ?? this.use24HourClock,
-      );
+    String? language,
+  }) {
+    return Settings(
+      wakeWords: _checkWords(wakeWords ?? this.wakeWords),
+      use24HourClock: use24HourClock ?? this.use24HourClock,
+      language: language ?? this.language,
+    );
+  }
 
   factory Settings.fromJson(Map<String, dynamic> json) =>
       _$SettingsFromJson(json);
 
   Map<String, dynamic> toJson() => _$SettingsToJson(this);
+
+  List<String> _checkWords(List<String> words) {
+    final list = List<String>.from(words.map((w) => w.trim()));
+    list.retainWhere((w) => w.isNotEmpty);
+    return list;
+  }
 }

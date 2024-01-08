@@ -52,8 +52,6 @@ class Lava {
         center: Offset.zero, width: sx.toDouble(), height: sy.toDouble());
 
     this.matrix = {};
-    print(sx);
-    print(sRect.left - step);
     for (int i = (sRect.left - step).toInt(); i < sRect.right + step; i++) {
       this.matrix[i] = {};
       for (int j = (sRect.top - step).toInt(); j < sRect.bottom + step; j++) {

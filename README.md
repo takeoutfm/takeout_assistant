@@ -1,11 +1,14 @@
 # Takeout Assistant
 
 Voice assistant app with offline speech recognition using Vosk that displays a clock and listens for 
-wake-word(s) with actions that are processed internally or dispatched to other apps using Android intents.
+wake-word(s) followed by voice actions that are processed internally or dispatched to other apps 
+using Android intents.
 
 Features include:
 
 - Supports music playlist & playback commands that are dispatched to the [Takeout Mobile app](https://github.com/takeoutfm/takeout_app)
+- Volume control commands
+- Wake-words are optional, speak naturally, it's all offline and locally processed
 - Lava Clock from the Flutter 2020 clock challenge (@jamesblasco)
 - Vosk offline speech recognition (english small model)
 - Torch/flashlight on/off

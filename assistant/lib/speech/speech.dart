@@ -28,6 +28,18 @@ class SpeechState {
   SpeechState(this.awake, this.text);
 }
 
+class SpeechAsleep extends SpeechState {
+  SpeechAsleep() : super(false, '');
+}
+
+class SpeechAwake extends SpeechState {
+  SpeechAwake() : super(true, '');
+}
+
+class SpeechText extends SpeechState {
+  SpeechText(String text) : super(true, text);
+}
+
 class SpeechCubit extends Cubit<SpeechState> {
   final SpeechRepository repository;
 
@@ -38,28 +50,28 @@ class SpeechCubit extends Cubit<SpeechState> {
   void _init() {
     repository.stream.listen((event) {
       if (event is WakeWordEvent) {
-        emit(SpeechState(true, ''));
+        emit(SpeechAwake());
       } else if (event is ListeningEvent) {
-        emit(SpeechState(false, state.text));
+        emit(SpeechAsleep());
       } else if (event is TextEvent) {
-        final text =
-            state.text.isNotEmpty ? state.text + ' ' + event.text : event.text;
-        emit(SpeechState(true, text));
+        // final text =
+        //     state.text.isNotEmpty ? state.text + ' ' + event.text : event.text;
+        emit(SpeechText(event.text));
       }
     });
   }
 
-  void awake() {
-    emit(SpeechState(true, ''));
-  }
+// void awake() {
+//   emit(SpeechState(true, ''));
+// }
 
-  void text(String text) {
-    emit(SpeechState(false, text));
-  }
+// void text(String text) {
+//   emit(SpeechState(false, text));
+// }
 
-  void start() {}
-
-  void stop() {}
+// void start() {}
+//
+// void stop() {}
 }
 
 abstract class SpeechEvent {}
@@ -78,9 +90,7 @@ class SpeechRepository {
   final SpeechProvider _provider;
   final SettingsRepository settingsRepository;
 
-  SpeechRepository(
-      {SpeechProvider? provider,
-      required this.settingsRepository})
+  SpeechRepository({SpeechProvider? provider, required this.settingsRepository})
       : _provider = provider ?? VoskSpeechProvider(settingsRepository) {
     _init();
   }

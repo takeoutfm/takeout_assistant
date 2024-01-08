@@ -24,83 +24,74 @@ file=.version
 dryrun=0
 version=""
 
-while getopts x:f:th flag
-do
-    case "${flag}" in
-	x) version=${OPTARG};;
-	f) file=${OPTARG};;
-	t) dryrun=1;;
-	h)
-	    echo "Usage:"
-	    echo "  $0 [flags]"
-	    echo
-	    echo "Flags:"
-	    echo "  -f file    ; version file, default is .version"
-	    echo "  -x version ; override version file"
-	    echo "  -t         ; dryrun test"
-	    exit 0
-	    ;;
-	*) exit 1;;
-    esac
+while getopts x:f:th flag; do
+  case "${flag}" in
+  x) version=${OPTARG} ;;
+  f) file=${OPTARG} ;;
+  t) dryrun=1 ;;
+  h)
+    echo "Usage:"
+    echo "  $0 [flags]"
+    echo
+    echo "Flags:"
+    echo "  -f file    ; version file, default is .version"
+    echo "  -x version ; override version file"
+    echo "  -t         ; dryrun test"
+    exit 0
+    ;;
+  *) exit 1 ;;
+  esac
 done
 
-if test -z "${version}"
-then
-    # ensure file exists
-    if ! test -f $file
-    then
-	echo "${file}: does not exist"
-	exit 1
-    fi
-    version=`cat ${file}`
+if test -z "${version}"; then
+  # ensure file exists
+  if ! test -f $file; then
+    echo "${file}: does not exist"
+    exit 1
+  fi
+  version=$(cat ${file})
 fi
 
 # ensure version is provided
-if test -z "${version}"
-then
-    echo "${file}: version is empty"
-    exit 1
+if test -z "${version}"; then
+  echo "${file}: version is empty"
+  exit 1
 fi
 # ensure version is valid
-if echo $version | egrep -E "^${number}$"
-then
-    echo "using ${version}"
+if echo $version | egrep -E "^${number}$"; then
+  echo "using ${version}"
 else
-    echo "invalid version number: ${version}"
-    exit 1
+  echo "invalid version number: ${version}"
+  exit 1
 fi
 
-major=`echo $version | cut -d. -f 1`
-minor=`echo $version | cut -d. -f 2`
-patch=`echo $version | cut -d. -f 3`
-versionCode=$((major*10000 + minor*100 + patch))
+major=$(echo $version | cut -d. -f 1)
+minor=$(echo $version | cut -d. -f 2)
+patch=$(echo $version | cut -d. -f 3)
+versionCode=$((major * 10000 + minor * 100 + patch))
 
 # find files with version patterns
-find . -type f | xargs egrep -l -E "${pattern}" | while read f
-do
-    if test ${dryrun} -eq 1
-    then
-	# dryrun print only
-	result=`sed -E -e "s/${pattern}/${version}\2/g" $f|grep $version`
-	echo "1 ${f}: ${result}"
-    else
-	# update file
-	sed -i -E -e "s/${pattern}/${version}\2/g" $f
-	echo "${f}: updated"
-    fi
+find . -type f | xargs egrep -l -E "${pattern}" | while read f; do
+  if test ${dryrun} -eq 1; then
+    # dryrun print only
+    result=$(sed -E -e "s/${pattern}/${version}\2/g" $f | grep $version)
+    echo "1 ${f}: ${result}"
+  else
+    # update file
+    sed -i -E -e "s/${pattern}/${version}\2/g" $f
+    echo "${f}: updated"
+  fi
 done
 
 # find files with version code patterns
-find . -type f | xargs egrep -l -E "${codePattern}" | while read f
-do
-    if test ${dryrun} -eq 1
-    then
-	# dryrun print only
-	result=`sed -E -e "s/${codePattern}/${versionCode}\2/g" $f|grep $versionCode`
-	echo "2 ${f}: ${result}"
-    else
-	# update file
-	sed -i -E -e "s/${codePattern}/${versionCode}\2/g" $f
-	echo "${f}: updated"
-    fi
+find . -type f | xargs egrep -l -E "${codePattern}" | while read f; do
+  if test ${dryrun} -eq 1; then
+    # dryrun print only
+    result=$(sed -E -e "s/${codePattern}/${versionCode}\2/g" $f | grep $versionCode)
+    echo "2 ${f}: ${result}"
+  else
+    # update file
+    sed -i -E -e "s/${codePattern}/${versionCode}\2/g" $f
+    echo "${f}: updated"
+  fi
 done

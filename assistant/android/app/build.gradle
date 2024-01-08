@@ -49,9 +49,9 @@ android {
     defaultConfig {
         applicationId "com.takeoutfm.assistant"
         minSdkVersion 23
-        targetSdkVersion flutter.targetSdkVersion
-        versionCode 100 // #versionCode#
-        versionName "0.1.0" // #version#
+        targetSdkVersion 31
+        versionCode 200 // #versionCode#
+        versionName "0.2.0" // #version#
     }
 
     signingConfigs {

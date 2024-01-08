@@ -22,7 +22,6 @@ import 'package:assistant/ambient/light.dart';
 import 'package:assistant/audio/volume.dart';
 import 'package:assistant/clock/clock.dart';
 import 'package:assistant/context/context.dart';
-import 'package:assistant/playing/playing.dart';
 import 'package:assistant/settings/repository.dart';
 import 'package:assistant/settings/settings.dart';
 import 'package:assistant/speech/model.dart';
@@ -32,9 +31,9 @@ import 'package:flutter/material.dart' hide Intent;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:nested/nested.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class AppBloc {
   static late Directory _appDir;
@@ -60,6 +59,8 @@ class AppBloc {
         await HydratedStorage.build(storageDirectory: storageDir);
   }
 
+  static final intents = SpeechModels();
+
   Widget init(BuildContext context, {required Widget child}) {
     return MultiRepositoryProvider(
         providers: repositories(_appDir),
@@ -74,7 +75,6 @@ class AppBloc {
     final ambientLightRepository = AmbientLightRepository();
     final speechRepository =
         SpeechRepository(settingsRepository: settingsRepository);
-    final playingRepository = PlayingRepository();
     final volumeRepository = VolumeRepository();
     final torchRepository = TorchLightRepository();
     final clockRepository = ClockRepository();
@@ -82,7 +82,6 @@ class AppBloc {
     return [
       RepositoryProvider(create: (_) => ambientLightRepository),
       RepositoryProvider(create: (_) => speechRepository),
-      RepositoryProvider(create: (_) => playingRepository),
       RepositoryProvider(create: (_) => volumeRepository),
       RepositoryProvider(create: (_) => torchRepository),
       RepositoryProvider(create: (_) => clockRepository),
@@ -109,10 +108,6 @@ class AppBloc {
         create: (context) => SpeechCubit(context.read<SpeechRepository>()),
       ),
       BlocProvider(
-        lazy: false,
-        create: (context) => PlayingCubit(context.read<PlayingRepository>()),
-      ),
-      BlocProvider(
         create: (context) => VolumeCubit(context.read<VolumeRepository>()),
       ),
       BlocProvider(
@@ -137,16 +132,10 @@ class AppBloc {
   }
 
   List<SingleChildWidget> listeners(BuildContext context) {
-    final intents = SpeechModels();
-    final language = 'en';
     return [
       BlocListener<AmbientLightCubit, AmbientLightState>(
           listener: (context, state) {
         // print('ambient light lux is ${state.lux}');
-      }),
-      BlocListener<PlayingCubit, PlayingState>(listener: (context, state) {
-        print(
-            'playing ${state.artist} / ${state.album} / ${state.title} : ${state.position} ${state.duration} : ${state.playing}');
       }),
       BlocListener<VolumeCubit, VolumeState>(listener: (context, state) {
         print('volume is ${state.volume}, was ${state.previousVolume}');
@@ -156,54 +145,61 @@ class AppBloc {
         print('torch is ${state.enabled}');
       }),
       BlocListener<SpeechCubit, SpeechState>(
-          listenWhen: (prev, curr) => prev.awake != curr.awake,
+          listenWhen: (_, state) =>
+              state is SpeechAsleep ||
+              state is SpeechAwake ||
+              state is SpeechText,
           listener: (context, state) {
-            if (state.awake) {
-              print('speech awake');
+            if (state is SpeechAwake) {
               SystemSound.play(SystemSoundType.click);
-              // context.volume.setVolume(0.1);
               context.clock.pause();
-            } else {
-              print('speech asleep [${state.text}]');
+            } else if (state is SpeechAsleep) {
               context.clock.resume();
-              final intent = intents.match(language, state.text);
-              // context.volume.setVolume(context.volume.state.previousVolume);
-              if (intent != null) {
-                print('intent name is ${intent.name}');
-                acknowledge().then((_) {
-                  String? action = _intent2action[intent.name];
-                  print('action is $action');
-                  if (action != null) {
-                    final args = intent.fields;
-                    final i = AndroidIntent(
-                      action: action,
-                      arguments: args,
-                    );
-                    i.launch();
-                  } else if (intent.name == Intent.torch_on) {
-                    context.torch.enable();
-                  } else if (intent.name == Intent.torch_off) {
-                    context.torch.disable();
-                  } else if (intent.name == Intent.volume_up) {
-                    volumeUp(context);
-                  } else if (intent.name == Intent.volume_down) {
-                    volumeDown(context);
-                  } else if (intent.name == Intent.volume) {
-                    final value = intent.fields['volume'];
-                    if (value != null) {
-                      final volume = intents.volume(language, value);
-                      if (volume != null) {
-                        setVolume(context, volume);
-                      }
-                    }
-                  }
-                });
-              } else {
-                print('intent not found');
-              }
+            } else if (state is SpeechText) {
+              handleText(context, state);
             }
           }),
     ];
+  }
+
+  void handleText(BuildContext context, SpeechText state) {
+    final language = context.settings.state.settings.language;
+    final intent = intents.match(language, state.text);
+    if (intent != null) {
+      handleIntent(context, language, intent);
+    } else {
+      print('unmatched - ${state.text}');
+    }
+  }
+
+  void handleIntent(BuildContext context, String language, Intent intent) {
+    acknowledge(context, intents.describe(language, intent) ?? 'ok').then((_) {
+      String? action = _intent2action[intent.name];
+      if (action != null) {
+        final args = intent.fields;
+        final i = AndroidIntent(
+          action: action,
+          arguments: args,
+        );
+        i.launch();
+      } else if (intent.name == Intent.torch_on) {
+        context.torch.enable();
+      } else if (intent.name == Intent.torch_off) {
+        context.torch.disable();
+      } else if (intent.name == Intent.volume_up) {
+        volumeUp(context);
+      } else if (intent.name == Intent.volume_down) {
+        volumeDown(context);
+      } else if (intent.name == Intent.volume) {
+        final value = intent.fields['volume'];
+        if (value != null) {
+          final volume = intents.volume(language, value);
+          if (volume != null) {
+            setVolume(context, volume);
+          }
+        }
+      }
+    });
   }
 
   void volumeUp(BuildContext context) {
@@ -214,7 +210,6 @@ class AppBloc {
     } else {
       v += v * factor;
     }
-    print('volume up $v');
     context.volume.setVolume(v);
   }
 
@@ -225,7 +220,6 @@ class AppBloc {
     if (v < 0) {
       v = 0;
     }
-    print('volume down $v');
     context.volume.setVolume(v);
   }
 
@@ -233,9 +227,13 @@ class AppBloc {
     context.volume.setVolume(volume);
   }
 
-  Future<void> acknowledge() async {
-    final player = AudioPlayer();
-    await player.setAsset('assets/sounds/Iapetus.ogg');
-    await player.play();
+  Future<void> acknowledge(BuildContext context, String msg) async {
+    Fluttertoast.showToast(
+        msg: msg,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.white,
+        textColor: Colors.black,
+        fontSize: 16.0);
   }
 }

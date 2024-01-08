@@ -127,7 +127,7 @@ class ConfigDrawer extends StatelessWidget {
               ),
             ),
           ),
-          Container(child: Text('Takeout Assistant 0.1.0')), // #version#
+          Container(child: Text('Takeout Assistant 0.2.0')), // #version#
         ],
       ),
     )));
