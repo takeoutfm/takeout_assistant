@@ -22,6 +22,10 @@ import 'package:assistant/ambient/light.dart';
 import 'package:assistant/audio/volume.dart';
 import 'package:assistant/clock/clock.dart';
 import 'package:assistant/context/context.dart';
+import 'package:assistant/home/home.dart';
+import 'package:assistant/home/repository.dart';
+import 'package:assistant/intent/android.dart';
+import 'package:assistant/intent/model.dart';
 import 'package:assistant/settings/repository.dart';
 import 'package:assistant/settings/settings.dart';
 import 'package:assistant/speech/model.dart';
@@ -30,27 +34,14 @@ import 'package:assistant/torch/light.dart';
 import 'package:flutter/material.dart' hide Intent;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:nested/nested.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class AppBloc {
   static late Directory _appDir;
-
-  static final Map<String, String> _intent2action = {
-    Intent.play_artist_songs: 'com.takeoutfm.action.PLAY_ARTIST',
-    Intent.play_artist_song: 'com.takeoutfm.action.PLAY_ARTIST_SONG',
-    Intent.play_artist_album: 'com.takeoutfm.action.PLAY_ARTIST_ALBUM',
-    Intent.play_artist_radio: 'com.takeoutfm.action.PLAY_ARTIST_RADIO',
-    Intent.play_artist_popular_songs:
-        'com.takeoutfm.action.PLAY_ARTIST_POPULAR_SONGS',
-    Intent.play_album: 'com.takeoutfm.action.PLAY_ALBUM',
-    Intent.play_song: 'com.takeoutfm.action.PLAY_SONG',
-    Intent.player_play: 'com.takeoutfm.action.PLAYER_PLAY',
-    Intent.player_pause: 'com.takeoutfm.action.PLAYER_PAUSE',
-    Intent.player_next: 'com.takeoutfm.action.PLAYER_NEXT',
-  };
 
   static Future<void> initStorage() async {
     _appDir = await getApplicationDocumentsDirectory();
@@ -78,6 +69,7 @@ class AppBloc {
     final volumeRepository = VolumeRepository();
     final torchRepository = TorchLightRepository();
     final clockRepository = ClockRepository();
+    final homeRepository = HomeRepository();
 
     return [
       RepositoryProvider(create: (_) => ambientLightRepository),
@@ -86,6 +78,7 @@ class AppBloc {
       RepositoryProvider(create: (_) => torchRepository),
       RepositoryProvider(create: (_) => clockRepository),
       RepositoryProvider(create: (_) => settingsRepository),
+      RepositoryProvider(create: (_) => homeRepository),
     ];
   }
 
@@ -117,6 +110,11 @@ class AppBloc {
       BlocProvider(
         lazy: false,
         create: (context) => ClockCubit(context.read<ClockRepository>()),
+      ),
+      BlocProvider(
+        lazy: false,
+        create: (context) =>
+            HomeCubit(repository: context.read<HomeRepository>()),
       ),
       BlocProvider(
           lazy: false,
@@ -166,6 +164,8 @@ class AppBloc {
     final language = context.settings.state.settings.language;
     final intent = intents.match(language, state.text);
     if (intent != null) {
+      print(intent.name);
+      print(intent.extras);
       handleIntent(context, language, intent);
     } else {
       print('unmatched - ${state.text}');
@@ -174,32 +174,85 @@ class AppBloc {
 
   void handleIntent(BuildContext context, String language, Intent intent) {
     acknowledge(context, intents.describe(language, intent) ?? 'ok').then((_) {
-      String? action = _intent2action[intent.name];
-      if (action != null) {
-        final args = intent.fields;
-        final i = AndroidIntent(
-          action: action,
-          arguments: args,
+      final androidAction = AndroidAction.build(intent);
+      if (androidAction != null) {
+        final androidIntent = AndroidIntent(
+          action: androidAction.name,
+          arguments: androidAction.extrasMap(),
         );
-        i.launch();
-      } else if (intent.name == Intent.torch_on) {
+        androidIntent.launch().then((_) {
+          // restore foreground after 5 seconds
+          Future.delayed(const Duration(seconds: 5),
+              () => FlutterForegroundTask.launchApp());
+        });
+      } else if (intent.name == IntentName.torchOn) {
         context.torch.enable();
-      } else if (intent.name == Intent.torch_off) {
+      } else if (intent.name == IntentName.torchOff) {
         context.torch.disable();
-      } else if (intent.name == Intent.volume_up) {
+      } else if (intent.name == IntentName.volumeUp) {
         volumeUp(context);
-      } else if (intent.name == Intent.volume_down) {
+      } else if (intent.name == IntentName.volumeDown) {
         volumeDown(context);
-      } else if (intent.name == Intent.volume) {
-        final value = intent.fields['volume'];
+      } else if (intent.name == IntentName.volume) {
+        final value = intent.extras['scaled_volume'];
         if (value != null) {
-          final volume = intents.volume(language, value);
-          if (volume != null) {
-            setVolume(context, volume);
-          }
+          setVolume(context, value);
         }
+      } else if (intent.name == IntentName.turnOnLight) {
+        final name = intent.extras['light'] as String?;
+        doLight(context, name: name, on: true);
+      } else if (intent.name == IntentName.turnOffLight) {
+        final name = intent.extras['light'] as String?;
+        doLight(context, name: name, on: false);
+      } else if (intent.name == IntentName.setLightBrightness) {
+        final name = intent.extras['light'] as String?;
+        final brightness = intent.extras['brightness_value'];
+        doLight(context, name: name, brightness: brightness);
+      } else if (intent.name == IntentName.setLightColor) {
+        final name = intent.extras['light'] as String?;
+        final color = intent.extras['color_value'] as Color?;
+        doLight(context, name: name, color: color);
       }
     });
+  }
+
+  void doLight(BuildContext context,
+      {String? name, bool? on, double? brightness, Color? color}) {
+    final defaultRoom = context.settings.state.settings.homeRoom;
+    final doit = (light) {
+      if (on == true) {
+        context.home.lightOn(light);
+      } else if (on == false) {
+        context.home.lightOff(light);
+      }
+      if (brightness != null) {
+        context.home.lightBrightness(light, brightness);
+      }
+      if (color != null) {
+        context.home.lightColor(light, color);
+      }
+    };
+
+    if (name != null) {
+      String? defaultRoomLight;
+      if (defaultRoom != null) {
+        defaultRoomLight = '${defaultRoom.toLowerCase()} ${name.toLowerCase()}';
+      }
+      for (var light in context.home.state.lights) {
+        if (light.qualifiedNames.contains(name.toLowerCase()) ||
+            light.qualifiedNames.contains(defaultRoomLight)) {
+          print('qualified matched ${light.name}');
+          doit(light);
+        }
+      }
+    } else {
+      for (var light in context.home.state.lights) {
+        if (light.room == defaultRoom) {
+          print('room matched ${light.name}');
+          doit(light);
+        }
+      }
+    }
   }
 
   void volumeUp(BuildContext context) {

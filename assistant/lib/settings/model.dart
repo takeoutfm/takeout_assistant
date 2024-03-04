@@ -19,6 +19,11 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'model.g.dart';
 
+enum DisplayType {
+  clock,
+  basic,
+}
+
 @JsonSerializable()
 class Settings {
   static const defaultWakeWords = <String>[];
@@ -27,27 +32,36 @@ class Settings {
   final List<String> wakeWords;
   final bool use24HourClock;
   final String language;
+  final DisplayType displayType;
+  final String? homeRoom;
 
   Settings(
       {required this.wakeWords,
       required this.use24HourClock,
-      this.language = defaultLanguage});
+      required this.displayType,
+      this.language = Settings.defaultLanguage,
+      this.homeRoom});
 
   factory Settings.initial() => Settings(
         wakeWords: defaultWakeWords,
         use24HourClock: false,
+        displayType: DisplayType.clock,
         language: defaultLanguage,
       );
 
   Settings copyWith({
     List<String>? wakeWords,
     bool? use24HourClock,
+    DisplayType? displayType,
     String? language,
+    String? homeRoom,
   }) {
     return Settings(
       wakeWords: _checkWords(wakeWords ?? this.wakeWords),
       use24HourClock: use24HourClock ?? this.use24HourClock,
+      displayType: displayType ?? this.displayType,
       language: language ?? this.language,
+      homeRoom: homeRoom ?? this.homeRoom,
     );
   }
 

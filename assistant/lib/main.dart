@@ -17,16 +17,23 @@
 
 import 'package:assistant/context/bloc.dart';
 import 'package:assistant/context/context.dart';
+import 'package:assistant/settings/model.dart';
 import 'package:assistant/settings/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:one_clock/one_clock.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
-void main() async {
+Future ensureInitialized() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-
   await AppBloc.initStorage();
+}
+
+void main() async {
+  await ensureInitialized();
   runApp(const AssistantApp());
 }
 
@@ -44,6 +51,8 @@ class AssistantAppState extends State<AssistantApp> {
   Widget build(BuildContext context) {
     return AppBloc().init(context,
         child: MaterialApp(
+            theme: ThemeData.light(useMaterial3: true),
+            darkTheme: ThemeData.dark(useMaterial3: true),
             home: Scaffold(
                 resizeToAvoidBottomInset: false,
                 endDrawer: ConfigDrawer(),
@@ -56,7 +65,7 @@ class AssistantAppState extends State<AssistantApp> {
                           });
                         },
                         child: Stack(children: [
-                          AssistantClock(),
+                          AssistantDisplay(),
                           if (_configButtonShown)
                             Positioned(
                               top: 0,
@@ -74,7 +83,7 @@ class AssistantAppState extends State<AssistantApp> {
                                       EdgeInsetsDirectional.only(bottom: 16),
                                   child: Opacity(
                                     opacity: 0.3,
-                                    child: Text('Takeout',
+                                    child: Text('Takeout Assistant',
                                         style: Theme.of(context)
                                             .textTheme
                                             .titleLarge),
@@ -114,6 +123,19 @@ class ConfigDrawer extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: <Widget>[
+                  _enumMenu('Display', settings.displayType, DisplayType.values,
+                      (value) {
+                    if (value != null) {
+                      context.settings.displayType = value;
+                    }
+                  }),
+                  if (context.home.state.rooms.isNotEmpty)
+                    _enumMenu('Home Room', settings.homeRoom,
+                        context.home.state.rooms, (value) {
+                      if (value != null) {
+                        context.settings.homeRoom = value;
+                      }
+                    }),
                   _switch('24-hour Clock', settings.use24HourClock,
                       (bool value) {
                     context.settings.use24HourClock = value;
@@ -122,12 +144,13 @@ class ConfigDrawer extends StatelessWidget {
                       (value) {
                     context.settings.wakeWords =
                         value.split(RegExp(r'\s*,\s*'));
-                  })
+                  }),
                 ],
               ),
             ),
           ),
-          Container(child: Text('Takeout Assistant 0.2.0')), // #version#
+          Container(child: Text('Takeout Assistant 0.2.0')),
+          // #version#
         ],
       ),
     )));
@@ -145,27 +168,29 @@ class ConfigDrawer extends StatelessWidget {
     );
   }
 
-  // Widget _enumMenu<T>(
-  //     String label, T value, List<T> items, ValueChanged<T?> onChanged) {
-  //   return InputDecorator(
-  //     decoration: InputDecoration(
-  //       labelText: label,
-  //     ),
-  //     child: DropdownButtonHideUnderline(
-  //       child: DropdownButton<T>(
-  //         value: value,
-  //         isDense: true,
-  //         onChanged: onChanged,
-  //         items: items.map((T item) {
-  //           return DropdownMenuItem<T>(
-  //             value: item,
-  //             child: Text(enumToString(item.toString())),
-  //           );
-  //         }).toList(),
-  //       ),
-  //     ),
-  //   );
-  // }
+  Widget _enumMenu<T>(
+      String label, T value, List<T> items, ValueChanged<T?> onChanged) {
+    return InputDecorator(
+      decoration: InputDecoration(
+        labelText: label,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          isDense: true,
+          onChanged: onChanged,
+          items: items.map((T item) {
+            return DropdownMenuItem<T>(
+              value: item,
+              child: Text(enumToString(item.toString())),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  String enumToString(Object e) => e.toString().split('.').last;
 
   Widget _textField(
       String currentValue, String label, ValueChanged<String> onChanged) {
@@ -179,25 +204,42 @@ class ConfigDrawer extends StatelessWidget {
   }
 }
 
-class SpeechButton extends StatelessWidget {
-  final String text;
-  final void Function(BuildContext) onPressed;
-
-  SpeechButton({required this.text, required this.onPressed});
-
+class AssistantDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Chip(
-        onDeleted: () {},
-        avatar: Icon(Icons.place_outlined),
-        label: Text(text));
-    // onPressed: () => onPressed(context));
-  }
-}
-
-class AssistantClock extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return context.clock.repository.build(context);
+    final state = context.watch<SettingsCubit>().state;
+    WakelockPlus.disable();
+    switch (state.settings.displayType) {
+      case DisplayType.clock:
+        WakelockPlus.enable();
+        return context.clock.repository.build(context);
+      case DisplayType.basic:
+        // final Brightness brightness = MediaQuery.platformBrightnessOf(context);
+        return Center(
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SvgPicture.asset(width: 200, height: 200, 'assets/images/mic.svg'),
+            Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  DigitalClock(
+                    digitalClockTextColor: Colors.white70,
+                    format: state.settings.use24HourClock ? "HH:mm" : "hh:mm",
+                    textScaleFactor: 3,
+                    isLive: true,
+                  ),
+                  DigitalClock(
+                    digitalClockTextColor: Colors.white24,
+                    format: "EEE, MMM d",
+                    textScaleFactor: 1,
+                    isLive: true,
+                  )
+                ]),
+          ],
+        ));
+    }
   }
 }

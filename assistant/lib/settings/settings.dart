@@ -56,6 +56,14 @@ class SettingsCubit extends HydratedCubit<SettingsState> {
     emit(SettingsState(state.settings.copyWith(language: language)));
   }
 
+  set displayType(DisplayType displayType) {
+    emit(SettingsState(state.settings.copyWith(displayType: displayType)));
+  }
+
+  set homeRoom(String homeRoom) {
+    emit(SettingsState(state.settings.copyWith(homeRoom: homeRoom)));
+  }
+
   @override
   SettingsState fromJson(Map<String, dynamic> json) =>
       SettingsState.fromJson(json['settings'] as Map<String, dynamic>);

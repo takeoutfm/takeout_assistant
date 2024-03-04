@@ -18,6 +18,7 @@
 import 'package:assistant/ambient/light.dart';
 import 'package:assistant/audio/volume.dart';
 import 'package:assistant/clock/clock.dart';
+import 'package:assistant/home/home.dart';
 import 'package:assistant/settings/settings.dart';
 import 'package:assistant/speech/speech.dart';
 import 'package:assistant/torch/light.dart';
@@ -36,4 +37,6 @@ extension AppContext on BuildContext {
   ClockCubit get clock => read<ClockCubit>();
 
   SettingsCubit get settings => read<SettingsCubit>();
+
+  HomeCubit get home => read<HomeCubit>();
 }

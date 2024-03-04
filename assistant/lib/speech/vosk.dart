@@ -19,7 +19,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:assistant/settings/repository.dart';
-import 'package:vosk_flutter/vosk_flutter.dart';
+import 'package:vosk_flutter_2/vosk_flutter_2.dart';
 import 'speech.dart';
 
 class VoskSpeechProvider implements SpeechProvider {
