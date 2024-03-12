@@ -50,8 +50,8 @@ android {
         applicationId "com.takeoutfm.assistant"
         minSdkVersion 30
         targetSdkVersion 31
-        versionCode 200 // #versionCode#
-        versionName "0.2.0" // #version#
+        versionCode 300 // #versionCode#
+        versionName "0.3.0" // #version#
     }
 
     signingConfigs {
