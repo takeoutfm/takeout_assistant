@@ -18,7 +18,7 @@
 import 'package:flutter/foundation.dart';
 
 enum IntentName {
-  // takeout
+  // takeout playlist
   playArtistSongs,
   playArtistSong,
   playArtistRadio,
@@ -28,9 +28,14 @@ enum IntentName {
   playAlbum,
   playRadio,
   playSearch,
+
+  // takeout player
   playerPlay,
   playerPause,
   playerNext,
+
+  // TODO
+  // takeout movies
   playMovie,
 
   // volume
@@ -52,6 +57,7 @@ enum IntentName {
   setTimer,
   dismissTimer,
 
+  // lights
   turnOnAllLights,
   turnOnLight,
   turnOffAllLights,
@@ -61,35 +67,61 @@ enum IntentName {
 }
 
 enum Extra {
+  artist,
+  album,
+  song,
   brightness,
   brightnessValue,
   name,
   color,
   colorValue,
   light,
+  room,
+  zone,
   volume,
   volumeValue,
+  time,
+  duration,
+  hour,
+  minutes,
+  seconds,
+  title,
+  query,
+  station;
+
+  static Map<String,Extra> _table = <String,Extra>{};
+
+  static Extra? toExtra(String value) {
+    if (_table.isEmpty) {
+      for (var v in values) {
+        _table[v.name] = v;
+      }
+    }
+    return _table[value];
+  }
 }
 
 class Intent {
   final IntentName name;
-  final Map<String, dynamic> extras;
+  final Map<Extra, dynamic> extras;
 
   Intent(this.name, this.extras);
+
+  dynamic operator [](Extra e) => extras[e];
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is Intent &&
-              runtimeType == other.runtimeType &&
-              name == other.name &&
-              mapEquals(extras, other.extras);
+      other is Intent &&
+          runtimeType == other.runtimeType &&
+          name == other.name &&
+          mapEquals(extras, other.extras);
 
   @override
   int get hashCode => name.hashCode ^ extras.hashCode;
 }
 
-typedef IntentExtras = Map<String, dynamic>;
+typedef IntentExtras = Map<Extra, dynamic>;
 typedef ExtrasCallback = Function(IntentExtras extras);
 
 class IntentModel {
@@ -140,14 +172,23 @@ class IntentModel {
     return null;
   }
 
-  Map<String, dynamic> _extract(String phrase, RegExp regexp) {
-    final result = <String, dynamic>{};
+  Map<Extra, dynamic> _extract(String phrase, RegExp regexp) {
+    final result = IntentExtras();
     final match = regexp.firstMatch(phrase);
     if (match != null) {
       for (var n in match.groupNames) {
-        result[n] = match.namedGroup(n);
+        final e = _matchNameExtra(n);
+        result[e] = match.namedGroup(n);
       }
     }
     return result;
+  }
+
+  Extra _matchNameExtra(String name) {
+    final extra = Extra.toExtra(name);
+    if (extra != null) {
+      return extra;
+    }
+    throw UnsupportedError;
   }
 }

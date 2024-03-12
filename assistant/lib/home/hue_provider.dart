@@ -1,4 +1,3 @@
-
 import 'dart:ui';
 
 import 'package:flutter_hue/domain/repos/bridge_discovery_repo.dart';
@@ -14,26 +13,36 @@ class HueHomeProvider extends HomeProvider {
   List<String> _rooms = [];
   List<String> _zones = [];
 
+  @override
   Future<bool> authRequired() async {
     final bridges = await BridgeDiscoveryRepo.fetchSavedBridges();
     return bridges.isEmpty;
   }
 
-  Future<void> discover() async {
-    await _discoverBridges();
+  @override
+  Future<void> discover({String? defaultBridge}) async {
+    await _discoverBridges(defaultBridge);
+  }
+
+  @override
+  Future<void> fetchNetwork() async {
     await _fetchNetwork();
   }
 
+  @override
   List<Light> get lights => _lights;
 
+  @override
   List<String> get rooms => _rooms;
 
+  @override
   List<String> get zones => _zones;
 
+  @override
   Future<void> identifyLight(Light light) async {
     hue.Device? target = _findDevice(light.name);
     if (target != null) {
-      target.identifyAction = "identify";
+      target.identifyAction = 'identify';
       await target.bridge?.put(target);
     }
   }
@@ -46,14 +55,17 @@ class HueHomeProvider extends HomeProvider {
     }
   }
 
+  @override
   Future<void> lightOn(Light light) async {
     return _light(light, true);
   }
 
+  @override
   Future<void> lightOff(Light light) async {
     return _light(light, false);
   }
 
+  @override
   Future<void> toggleLight(Light light) async {
     hue.Light? target = _findLight(light.id);
     if (target != null) {
@@ -62,6 +74,7 @@ class HueHomeProvider extends HomeProvider {
     }
   }
 
+  @override
   Future<void> lightBrightness(Light light, double percentage) async {
     hue.Light? target = _findLight(light.id);
     if (target != null) {
@@ -70,16 +83,52 @@ class HueHomeProvider extends HomeProvider {
     }
   }
 
+  @override
   Future<void> lightColor(Light light, Color color) async {
     hue.Light? target = _findLight(light.id);
     if (target != null) {
-      final list = hue.ColorConverter.color2xy(color);
-      print('set $light color to $color with $list');
-      target.color.xy.x = list[0];
-      target.color.xy.y = list[1];
-      target.dimming.brightness = list[2]*100;
+      final xy = color.toXy();
+      target.color.xy.x = xy[0];
+      target.color.xy.y = xy[1];
       await target.bridge?.put(target);
     }
+  }
+
+  @override
+  Future<void> zoneColor(String name, Color color) async {
+    final groupedLight = _zoneGroupedLight(name);
+    print('$name $groupedLight');
+    if (groupedLight != null) {
+      return _groupColor(groupedLight, color);
+    }
+  }
+
+  hue.GroupedLight? _zoneGroupedLight(String name) {
+    final network = _network;
+    if (network == null) {
+      return null;
+    }
+    for (var zone in network.zones) {
+      print('zone ${zone.metadata.name} vs $name');
+      if (zone.metadata.name == name) {
+        for (var res in zone.servicesAsResources) {
+          print('res $res');
+          if (res is hue.GroupedLight) {
+            return res;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  Future<void> _groupColor(hue.GroupedLight groupedLight, Color color) async {
+    final xy = color.toXy();
+    print('group color ${xy[0]} ${xy[1]}');
+    groupedLight.xy = hue.LightColorXy(x: xy[0], y: xy[1]);
+    print('${groupedLight.xy}');
+    print('put $_network put');
+    return _network?.put();
   }
 
   hue.Device? _findDevice(String name) {
@@ -106,33 +155,8 @@ class HueHomeProvider extends HomeProvider {
     return null;
   }
 
-  // hue.Room? _findRoom(String id) {
-  //   final network = _network;
-  //   if (network != null) {
-  //     for (var r in network.rooms) {
-  //       if (r.id == id) {
-  //         return r;
-  //       }
-  //     }
-  //   }
-  //   return null;
-  // }
-  //
-  // hue.Zone? _findZone(String id) {
-  //   final network = _network;
-  //   if (network != null) {
-  //     for (var z in network.zones) {
-  //       if (z.id == id) {
-  //         return z;
-  //       }
-  //     }
-  //   }
-  //   return null;
-  // }
-
-  Future<void> _discoverBridges() async {
+  Future<void> _discoverBridges(String? defaultBridge) async {
     final bridges = await BridgeDiscoveryRepo.fetchSavedBridges();
-    print('saved is $bridges');
     if (bridges.isEmpty) {
       List<String> bridgeIps = [];
       try {
@@ -140,8 +164,8 @@ class HueHomeProvider extends HomeProvider {
       } catch (e) {
         print('got $e');
       }
-      if (bridges.isEmpty) {
-        bridgeIps.add("192.168.86.46");
+      if (bridges.isEmpty && defaultBridge != null) {
+        bridgeIps.add(defaultBridge);
       }
       for (var ipAddress in bridgeIps) {
         final bridge =
@@ -157,19 +181,17 @@ class HueHomeProvider extends HomeProvider {
 
   Future<void> _fetchNetwork() async {
     final bridges = _bridges ?? [];
-
     final network = hue.HueNetwork(bridges: bridges);
     await network.fetchAll();
     _network = network;
+    _populate(network);
+  }
 
+  void _populate(hue.HueNetwork network) {
     // (re)populate
     _lights.clear();
     _rooms.clear();
     _zones.clear();
-
-    for (var s in network.scenes) {
-      print('scene ${s.metadata.name}');
-    }
 
     // map rooms
     final roomMap = <String, List<String>>{};
@@ -215,10 +237,13 @@ class HueHomeProvider extends HomeProvider {
 
       List<String> zones = [];
       for (var e in zoneMap.entries) {
-        if (e.value.contains(d.id)) {
+        if (e.value.contains(light.id)) {
           zones.add(e.key);
         }
       }
+
+      final xy = light.color.xy;
+      final color = hue.ColorConverter.xy2color(xy.x, xy.y);
 
       _lights.add(Light(
           id: light.id,
@@ -226,8 +251,9 @@ class HueHomeProvider extends HomeProvider {
           type: ResourceType.light,
           room: room,
           zones: zones,
+          color: color,
+          brightness: light.dimming.brightness,
           on: light.isOn));
-      print(_lights);
     }
   }
 }

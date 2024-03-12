@@ -93,14 +93,14 @@ class ClockRepository {
   ClockRepository({ClockProvider? provider})
       : _provider = provider ?? LavaClockProvider();
 
-  void init(SettingsRepository settingsRepository) {
+  void init(AssistantSettingsRepository settingsRepository) {
     _updateSettings(settingsRepository.settings);
     settingsRepository.stream?.listen((settings) {
       _updateSettings(settings);
     });
   }
 
-  void _updateSettings(Settings? settings) {
+  void _updateSettings(AssistantSettings? settings) {
     if (settings != null) {
       _provider.use24HourClock(settings.use24HourClock);
     }

@@ -30,8 +30,8 @@ class AlarmIntentBuilder implements AndroidActionBuilder {
         return AndroidAction(
           AndroidAction.setAlarm,
           extras: [
-            AndroidExtra(AndroidExtra.alarmHour, intent.extras['hour']),
-            AndroidExtra(AndroidExtra.alarmMinutes, intent.extras['minutes']),
+            AndroidExtra(AndroidExtra.alarmHour, intent[Extra.hour]),
+            AndroidExtra(AndroidExtra.alarmMinutes, intent[Extra.minutes]),
           ],
         );
       case IntentName.dismissAlarm:
@@ -53,7 +53,7 @@ class TimerIntentBuilder implements AndroidActionBuilder {
         return AndroidAction(
           AndroidAction.setTimer,
           extras: [
-            AndroidExtra(AndroidExtra.alarmLength, intent.extras['seconds']),
+            AndroidExtra(AndroidExtra.alarmLength, intent[Extra.seconds]),
             AndroidExtra(AndroidExtra.alarmMessage, 'Takeout Assistant'),
           ],
         );
@@ -75,39 +75,39 @@ class TakeoutIntentBuilder implements AndroidActionBuilder {
     switch (intent.name) {
       case IntentName.playArtistSongs:
         return AndroidAction(AndroidAction.playArtistSongs, extras: [
-          AndroidExtra(AndroidExtra.artist, intent.extras['artist'])
+          AndroidExtra(AndroidExtra.artist, intent[Extra.artist])
         ]);
       case IntentName.playArtistSong:
         return AndroidAction(AndroidAction.playArtistSong, extras: [
-          AndroidExtra(AndroidExtra.artist, intent.extras['artist']),
-          AndroidExtra(AndroidExtra.song, intent.extras['song'])
+          AndroidExtra(AndroidExtra.artist, intent[Extra.artist]),
+          AndroidExtra(AndroidExtra.song, intent[Extra.song]),
         ]);
       case IntentName.playArtistRadio:
         return AndroidAction(AndroidAction.playArtistRadio, extras: [
-          AndroidExtra(AndroidExtra.artist, intent.extras['artist'])
+          AndroidExtra(AndroidExtra.artist, intent[Extra.artist])
         ]);
       case IntentName.playArtistPopularSongs:
         return AndroidAction(AndroidAction.playArtistPopularSongs, extras: [
-          AndroidExtra(AndroidExtra.artist, intent.extras['artist'])
+          AndroidExtra(AndroidExtra.artist, intent[Extra.artist])
         ]);
       case IntentName.playArtistAlbum:
         return AndroidAction(AndroidAction.playArtistAlbum, extras: [
-          AndroidExtra(AndroidExtra.artist, intent.extras['artist']),
-          AndroidExtra(AndroidExtra.album, intent.extras['album'])
+          AndroidExtra(AndroidExtra.artist, intent[Extra.artist]),
+          AndroidExtra(AndroidExtra.album, intent[Extra.album])
         ]);
       case IntentName.playSong:
         return AndroidAction(AndroidAction.playSong,
-            extras: [AndroidExtra(AndroidExtra.song, intent.extras['song'])]);
+            extras: [AndroidExtra(AndroidExtra.song, intent[Extra.song])]);
       case IntentName.playAlbum:
         return AndroidAction(AndroidAction.playAlbum,
-            extras: [AndroidExtra(AndroidExtra.album, intent.extras['album'])]);
+            extras: [AndroidExtra(AndroidExtra.album, intent[Extra.album])]);
       case IntentName.playRadio:
         return AndroidAction(AndroidAction.playRadio, extras: [
-          AndroidExtra(AndroidExtra.station, intent.extras['station'])
+          AndroidExtra(AndroidExtra.station, intent[Extra.station])
         ]);
       case IntentName.playSearch:
         return AndroidAction(AndroidAction.playSearch,
-            extras: [AndroidExtra(AndroidExtra.query, intent.extras['q'])]);
+            extras: [AndroidExtra(AndroidExtra.query, intent[Extra.query])]);
       case IntentName.playerPlay:
         return AndroidAction(AndroidAction.playerPlay);
       case IntentName.playerPause:
@@ -116,7 +116,7 @@ class TakeoutIntentBuilder implements AndroidActionBuilder {
         return AndroidAction(AndroidAction.playerNext);
       case IntentName.playMovie:
         return AndroidAction(AndroidAction.playMovie,
-            extras: [AndroidExtra(AndroidExtra.title, intent.extras['title'])]);
+            extras: [AndroidExtra(AndroidExtra.title, intent[Extra.title])]);
       default:
         return null;
     }

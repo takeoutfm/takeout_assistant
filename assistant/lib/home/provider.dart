@@ -5,7 +5,9 @@ import 'model.dart';
 abstract class HomeProvider {
   Future<bool> authRequired();
 
-  Future<void> discover();
+  Future<void> discover({String? defaultBridge});
+
+  Future<void> fetchNetwork();
 
   List<Light> get lights;
 
@@ -24,4 +26,6 @@ abstract class HomeProvider {
   Future<void> lightBrightness(Light light, double percentage);
 
   Future<void> lightColor(Light light, Color color);
+
+  Future<void> zoneColor(String name, Color color);
 }

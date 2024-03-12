@@ -34,7 +34,7 @@ class VoskSpeechProvider implements SpeechProvider {
   static const _awakeDuration = Duration(seconds: 5);
   static const _filterWords = ['he', 'huh', 'it']; // noise words from vox
 
-  final SettingsRepository settingsRepository;
+  final AssistantSettingsRepository settingsRepository;
   final Duration awakeDuration;
 
   VoskSpeechProvider(this.settingsRepository,
@@ -63,9 +63,10 @@ class VoskSpeechProvider implements SpeechProvider {
     final data = jsonDecode(event) as Map<String, dynamic>;
     var text = data['text'] as String? ?? '';
     text = text.trim();
+    final useWakeWords = settingsRepository.settings?.enableWakeWords ?? false;
     final wakeWords = settingsRepository.settings?.wakeWords;
     if (text.isNotEmpty) {
-      if (wakeWords != null && wakeWords.isNotEmpty) {
+      if (useWakeWords && wakeWords != null && wakeWords.isNotEmpty) {
         _handleWakeWords(wakeWords, text);
       } else {
         _handleText(text);

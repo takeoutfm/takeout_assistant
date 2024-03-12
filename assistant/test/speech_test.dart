@@ -1,26 +1,24 @@
-import 'dart:ui';
-
-import 'package:assistant/speech/model.dart';
 import 'package:assistant/intent/model.dart';
+import 'package:assistant/speech/model.dart';
 import 'package:test/test.dart';
 
 void main() {
   test('english volume', () {
     final speech = SpeechModels();
     expect(
-      Intent(IntentName.volume, {'volume': 'five', 'scaled_volume': 0.5}),
+      Intent(IntentName.volume, {Extra.volume: 'five', Extra.volumeValue: 0.5}),
       speech.match('en', 'set volume to five'),
     );
     expect(
-      Intent(IntentName.volume, {'volume': 'zero', 'scaled_volume': 0.0}),
+      Intent(IntentName.volume, {Extra.volume: 'zero', Extra.volumeValue: 0.0}),
       speech.match('en', 'set volume to zero'),
     );
     expect(
-      Intent(IntentName.volume, {'volume': 'max', 'scaled_volume': 1.0}),
+      Intent(IntentName.volume, {Extra.volume: 'max', Extra.volumeValue: 1.0}),
       speech.match('en', 'set volume to max'),
     );
     expect(
-      Intent(IntentName.volume, {'volume': 'min', 'scaled_volume': 0.0}),
+      Intent(IntentName.volume, {Extra.volume: 'min', Extra.volumeValue: 0.0}),
       speech.match('en', 'set volume to min'),
     );
   });
@@ -60,7 +58,7 @@ void main() {
   test('english play_artist_songs', () {
     final speech = SpeechModels();
     expect(
-      Intent(IntentName.playArtistSongs, {'artist': 'gary numan'}),
+      Intent(IntentName.playArtistSongs, {Extra.artist: 'gary numan'}),
       speech.match('en', 'play songs by gary numan'),
     );
   });
@@ -69,7 +67,7 @@ void main() {
     final speech = SpeechModels();
     expect(
       Intent(IntentName.playArtistSong,
-          {'artist': 'gary numan', 'song': 'the pleasure principle'}),
+          {Extra.artist: 'gary numan', Extra.song: 'the pleasure principle'}),
       speech.match('en', 'play song the pleasure principle by gary numan'),
     );
   });
@@ -77,11 +75,11 @@ void main() {
   test('english play_search', () {
     final speech = SpeechModels();
     expect(
-      Intent(IntentName.playSearch, {'q': 'bagel radio'}),
+      Intent(IntentName.playSearch, {Extra.query: 'bagel radio'}),
       speech.match('en', 'play bagel radio'),
     );
     expect(
-      Intent(IntentName.playSearch, {'q': 'alternative rock'}),
+      Intent(IntentName.playSearch, {Extra.query: 'alternative rock'}),
       speech.match('en', 'play alternative rock'),
     );
   });
@@ -89,11 +87,11 @@ void main() {
   test('english play_radio', () {
     final speech = SpeechModels();
     expect(
-      Intent(IntentName.playRadio, {'station': 'indie rock'}),
+      Intent(IntentName.playRadio, {Extra.station: 'indie rock'}),
       speech.match('en', 'play station indie rock'),
     );
     expect(
-      Intent(IntentName.playRadio, {'station': 'groove salad'}),
+      Intent(IntentName.playRadio, {Extra.station: 'groove salad'}),
       speech.match('en', 'play groove salad station'),
     );
   });
@@ -102,7 +100,7 @@ void main() {
     final speech = SpeechModels();
     expect(
       Intent(IntentName.playArtistAlbum,
-          {'artist': 'led zeppelin', 'album': 'physical graffiti'}),
+          {Extra.artist: 'led zeppelin', Extra.album: 'physical graffiti'}),
       speech.match('en', 'play album physical graffiti by led zeppelin'),
     );
   });
@@ -110,7 +108,7 @@ void main() {
   test('english play_album', () {
     final speech = SpeechModels();
     expect(
-      Intent(IntentName.playAlbum, {'album': 'physical graffiti'}),
+      Intent(IntentName.playAlbum, {Extra.album: 'physical graffiti'}),
       speech.match('en', 'play album physical graffiti'),
     );
   });
@@ -118,78 +116,92 @@ void main() {
   test('english set_alarm', () {
     final speech = SpeechModels();
     expect(
-      Intent(IntentName.setAlarm, {'hour': 10, 'minutes': 0, 'time': 'ten am'}),
+      Intent(IntentName.setAlarm,
+          {Extra.hour: 10, Extra.minutes: 0, Extra.time: 'ten am'}),
       speech.match('en', 'set alarm for ten am'),
     );
     expect(
-      Intent(IntentName.setAlarm, {'hour': 22, 'minutes': 0, 'time': 'ten pm'}),
+      Intent(IntentName.setAlarm,
+          {Extra.hour: 22, Extra.minutes: 0, Extra.time: 'ten pm'}),
       speech.match('en', 'set alarm for ten pm'),
     );
     expect(
       Intent(IntentName.setAlarm,
-          {'hour': 10, 'minutes': 15, 'time': 'ten fifteen am'}),
+          {Extra.hour: 10, Extra.minutes: 15, Extra.time: 'ten fifteen am'}),
       speech.match('en', 'set alarm for ten fifteen am'),
     );
     expect(
       Intent(IntentName.setAlarm,
-          {'hour': 22, 'minutes': 15, 'time': 'ten fifteen pm'}),
+          {Extra.hour: 22, Extra.minutes: 15, Extra.time: 'ten fifteen pm'}),
       speech.match('en', 'set alarm for ten fifteen pm'),
     );
     expect(
       Intent(IntentName.setAlarm,
-          {'hour': 10, 'minutes': 40, 'time': 'ten forty'}),
+          {Extra.hour: 10, Extra.minutes: 40, Extra.time: 'ten forty'}),
       speech.match('en', 'set alarm for ten forty'),
     );
     expect(
       Intent(IntentName.setAlarm,
-          {'hour': 10, 'minutes': 45, 'time': 'ten forty five'}),
+          {Extra.hour: 10, Extra.minutes: 45, Extra.time: 'ten forty five'}),
       speech.match('en', 'set alarm for ten forty five'),
     );
     expect(
       Intent(IntentName.setAlarm,
-          {'hour': 10, 'minutes': 45, 'time': 'ten forty five am'}),
+          {Extra.hour: 10, Extra.minutes: 45, Extra.time: 'ten forty five am'}),
       speech.match('en', 'set alarm for ten forty five am'),
     );
     expect(
       Intent(IntentName.setAlarm,
-          {'hour': 22, 'minutes': 45, 'time': 'ten forty five pm'}),
+          {Extra.hour: 22, Extra.minutes: 45, Extra.time: 'ten forty five pm'}),
       speech.match('en', 'set alarm for ten forty five pm'),
     );
 
     expect(
-      Intent(
-          IntentName.setAlarm, {'hour': 14, 'minutes': 0, 'time': 'fourteen'}),
+      Intent(IntentName.setAlarm,
+          {Extra.hour: 14, Extra.minutes: 0, Extra.time: 'fourteen'}),
       speech.match('en', 'set alarm for fourteen'),
     );
     expect(
-      Intent(IntentName.setAlarm,
-          {'hour': 23, 'minutes': 30, 'time': 'twenty three thirty'}),
+      Intent(IntentName.setAlarm, {
+        Extra.hour: 23,
+        Extra.minutes: 30,
+        Extra.time: 'twenty three thirty'
+      }),
       speech.match('en', 'set alarm for twenty three thirty'),
     );
     expect(
-      Intent(IntentName.setAlarm,
-          {'hour': 21, 'minutes': 35, 'time': 'twenty one thirty five'}),
+      Intent(IntentName.setAlarm, {
+        Extra.hour: 21,
+        Extra.minutes: 35,
+        Extra.time: 'twenty one thirty five'
+      }),
       speech.match('en', 'set alarm for twenty one thirty five'),
     );
 
     expect(
-      Intent(IntentName.setAlarm,
-          {'hour': 5, 'minutes': 0, 'time': 'zero five hundred hours'}),
+      Intent(IntentName.setAlarm, {
+        Extra.hour: 5,
+        Extra.minutes: 0,
+        Extra.time: 'zero five hundred hours'
+      }),
       speech.match('en', 'set alarm for zero five hundred hours'),
     );
     expect(
       Intent(IntentName.setAlarm,
-          {'hour': 10, 'minutes': 0, 'time': 'ten hundred'}),
+          {Extra.hour: 10, Extra.minutes: 0, Extra.time: 'ten hundred'}),
       speech.match('en', 'set alarm for ten hundred'),
     );
     expect(
       Intent(IntentName.setAlarm,
-          {'hour': 16, 'minutes': 0, 'time': 'sixteen hundred'}),
+          {Extra.hour: 16, Extra.minutes: 0, Extra.time: 'sixteen hundred'}),
       speech.match('en', 'set alarm for sixteen hundred'),
     );
     expect(
-      Intent(IntentName.setAlarm,
-          {'hour': 21, 'minutes': 0, 'time': 'twenty one hundred hours'}),
+      Intent(IntentName.setAlarm, {
+        Extra.hour: 21,
+        Extra.minutes: 0,
+        Extra.time: 'twenty one hundred hours'
+      }),
       speech.match('en', 'set alarm for twenty one hundred hours'),
     );
   });
@@ -197,37 +209,42 @@ void main() {
   test('english set_timer', () {
     final speech = SpeechModels();
     expect(
-      Intent(IntentName.setTimer, {'seconds': 10, 'duration': 'ten seconds'}),
+      Intent(IntentName.setTimer,
+          {Extra.seconds: 10, Extra.duration: 'ten seconds'}),
       speech.match('en', 'set timer for ten seconds'),
     );
     expect(
-      Intent(IntentName.setTimer, {'seconds': 300, 'duration': 'five minutes'}),
+      Intent(IntentName.setTimer,
+          {Extra.seconds: 300, Extra.duration: 'five minutes'}),
       speech.match('en', 'set timer for five minutes'),
     );
     expect(
-      Intent(IntentName.setTimer, {'seconds': 7200, 'duration': 'two hours'}),
+      Intent(IntentName.setTimer,
+          {Extra.seconds: 7200, Extra.duration: 'two hours'}),
       speech.match('en', 'set timer for two hours'),
     );
     expect(
       Intent(IntentName.setTimer, {
-        'seconds': 3600 + 120 + 3,
-        'duration': 'one hour two minutes three seconds'
+        Extra.seconds: 3600 + 120 + 3,
+        Extra.duration: 'one hour two minutes three seconds'
       }),
       speech.match('en', 'set timer for one hour two minutes three seconds'),
     );
     expect(
       Intent(IntentName.setTimer,
-          {'seconds': 3600 + 120, 'duration': 'one hour two minutes'}),
+          {Extra.seconds: 3600 + 120, Extra.duration: 'one hour two minutes'}),
       speech.match('en', 'set timer for one hour two minutes'),
     );
     expect(
       Intent(IntentName.setTimer,
-          {'seconds': 3600 + 3, 'duration': 'one hour three seconds'}),
+          {Extra.seconds: 3600 + 3, Extra.duration: 'one hour three seconds'}),
       speech.match('en', 'set timer for one hour three seconds'),
     );
     expect(
-      Intent(IntentName.setTimer,
-          {'seconds': 120 + 3, 'duration': 'two minutes three seconds'}),
+      Intent(IntentName.setTimer, {
+        Extra.seconds: 120 + 3,
+        Extra.duration: 'two minutes three seconds'
+      }),
       speech.match('en', 'set timer for two minutes three seconds'),
     );
   });
@@ -303,15 +320,15 @@ void main() {
       speech.match('en', 'light on'),
     );
     expect(
-      Intent(IntentName.turnOnLight, {'light': 'lamp'}),
+      Intent(IntentName.turnOnLight, {Extra.light: 'lamp'}),
       speech.match('en', 'turn on the lamp'),
     );
     expect(
-      Intent(IntentName.turnOnLight, {'light': 'office'}),
+      Intent(IntentName.turnOnLight, {Extra.light: 'office'}),
       speech.match('en', 'turn on the office light'),
     );
     expect(
-      Intent(IntentName.turnOnLight, {'light': 'office desk'}),
+      Intent(IntentName.turnOnLight, {Extra.light: 'office desk'}),
       speech.match('en', 'turn on the office desk light'),
     );
   });
@@ -331,15 +348,15 @@ void main() {
       speech.match('en', 'light off'),
     );
     expect(
-      Intent(IntentName.turnOffLight, {'light': 'lamp'}),
+      Intent(IntentName.turnOffLight, {Extra.light: 'lamp'}),
       speech.match('en', 'turn off the lamp'),
     );
     expect(
-      Intent(IntentName.turnOffLight, {'light': 'office'}),
+      Intent(IntentName.turnOffLight, {Extra.light: 'office'}),
       speech.match('en', 'turn off the office light'),
     );
     expect(
-      Intent(IntentName.turnOffLight, {'light': 'office desk'}),
+      Intent(IntentName.turnOffLight, {Extra.light: 'office desk'}),
       speech.match('en', 'turn off the office desk light'),
     );
   });
@@ -380,21 +397,22 @@ void main() {
     final speech = SpeechModels();
     expect(
       Intent(IntentName.setLightColor,
-          {'light': 'family room lamp', 'color': 'red'}),
+          {Extra.light: 'family room lamp', Extra.color: 'red'}),
       without(speech.match('en', 'set family room lamp color to red'),
-          ['color_value']),
+          [Extra.colorValue]),
     );
     expect(
-      Intent(IntentName.setLightColor, {'light': 'lamp', 'color': 'red'}),
-      without(speech.match('en', 'set lamp color to red'), ['color_value']),
+      Intent(
+          IntentName.setLightColor, {Extra.light: 'lamp', Extra.color: 'red'}),
+      without(speech.match('en', 'set lamp color to red'), [Extra.colorValue]),
     );
     expect(
-      Intent(IntentName.setLightColor, {'color': 'red'}),
-      without(speech.match('en', 'set color to red'), ['color_value']),
+      Intent(IntentName.setLightColor, {Extra.color: 'red'}),
+      without(speech.match('en', 'set color to red'), [Extra.colorValue]),
     );
     expect(
-      Intent(IntentName.setLightColor, {'color': 'red'}),
-      without(speech.match('en', 'color red'), ['color_value']),
+      Intent(IntentName.setLightColor, {Extra.color: 'red'}),
+      without(speech.match('en', 'color red'), [Extra.colorValue]),
     );
   });
 
@@ -402,48 +420,48 @@ void main() {
     final speech = SpeechModels();
     expect(
       Intent(IntentName.setLightBrightness, {
-        'light': 'family room lamp',
-        'brightness': 'seventy five',
-        'brightness_value': 75.0
+        Extra.light: 'family room lamp',
+        Extra.brightness: 'seventy five',
+        Extra.brightnessValue: 75.0
       }),
       speech.match('en', 'set family room lamp brightness to seventy five'),
     );
     expect(
       Intent(IntentName.setLightBrightness, {
-        'light': 'lamp',
-        'brightness': 'seventy five',
-        'brightness_value': 75.0
+        Extra.light: 'lamp',
+        Extra.brightness: 'seventy five',
+        Extra.brightnessValue: 75.0
       }),
       speech.match('en', 'set lamp brightness to seventy five'),
     );
     expect(
       Intent(IntentName.setLightBrightness,
-          {'brightness': 'seventy five', 'brightness_value': 75.0}),
+          {Extra.brightness: 'seventy five', Extra.brightnessValue: 75.0}),
       speech.match('en', 'set brightness to seventy five'),
     );
     expect(
       Intent(IntentName.setLightBrightness,
-          {'brightness': 'twenty one', 'brightness_value': 21.0}),
+          {Extra.brightness: 'twenty one', Extra.brightnessValue: 21.0}),
       speech.match('en', 'brightness twenty one'),
     );
     expect(
       Intent(IntentName.setLightBrightness,
-          {'brightness': 'fifty', 'brightness_value': 50.0}),
+          {Extra.brightness: 'fifty', Extra.brightnessValue: 50.0}),
       speech.match('en', 'brightness fifty'),
     );
     expect(
       Intent(IntentName.setLightBrightness,
-          {'brightness': 'low', 'brightness_value': 10.0}),
+          {Extra.brightness: 'low', Extra.brightnessValue: 10.0}),
       speech.match('en', 'brightness low'),
     );
     expect(
       Intent(IntentName.setLightBrightness,
-          {'brightness': 'max', 'brightness_value': 100.0}),
+          {Extra.brightness: 'max', Extra.brightnessValue: 100.0}),
       speech.match('en', 'brightness max'),
     );
     expect(
       Intent(IntentName.setLightBrightness,
-          {'brightness': '45', 'brightness_value': 45.0}),
+          {Extra.brightness: '45', Extra.brightnessValue: 45.0}),
       speech.match('en', 'brightness 45'),
     );
   });
@@ -458,11 +476,11 @@ Intent? dump(Intent? intent) {
   return intent;
 }
 
-Intent? without(Intent? intent, List<String> keys) {
+Intent? without(Intent? intent, List<Extra> keys) {
   if (intent == null) {
     return null;
   }
-  final extras = <String, dynamic>{};
+  final extras = <Extra, dynamic>{};
   for (var e in intent.extras.entries) {
     if (keys.contains(e.key) == false) {
       extras[e.key] = e.value;

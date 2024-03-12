@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:flutter/services.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'model.g.dart';
@@ -25,50 +26,71 @@ enum DisplayType {
 }
 
 @JsonSerializable()
-class Settings {
+class AssistantSettings {
   static const defaultWakeWords = <String>[];
   static const defaultLanguage = 'en';
 
+  final bool enableWakeWords;
   final List<String> wakeWords;
   final bool use24HourClock;
   final String language;
   final DisplayType displayType;
   final String? homeRoom;
+  final bool enableMusicZone;
+  final String? musicZone;
+  final String? bridgeAddress;
+  final bool showPlayer;
 
-  Settings(
-      {required this.wakeWords,
+  AssistantSettings(
+      {required this.enableWakeWords,
+      required this.wakeWords,
       required this.use24HourClock,
       required this.displayType,
-      this.language = Settings.defaultLanguage,
-      this.homeRoom});
+      this.language = AssistantSettings.defaultLanguage,
+      this.homeRoom,
+      this.enableMusicZone = false,
+      this.musicZone,
+      this.bridgeAddress,
+      this.showPlayer = true});
 
-  factory Settings.initial() => Settings(
+  factory AssistantSettings.initial() => AssistantSettings(
+        enableWakeWords: false,
         wakeWords: defaultWakeWords,
         use24HourClock: false,
         displayType: DisplayType.clock,
         language: defaultLanguage,
       );
 
-  Settings copyWith({
+  AssistantSettings copyWith({
+    bool? enableWakeWords,
     List<String>? wakeWords,
     bool? use24HourClock,
     DisplayType? displayType,
     String? language,
     String? homeRoom,
+    bool? enableMusicZone,
+    String? musicZone,
+    String? bridgeAddress,
+    bool? showPlayer,
   }) {
-    return Settings(
+    return AssistantSettings(
+      enableWakeWords: enableWakeWords ?? this.enableWakeWords,
       wakeWords: _checkWords(wakeWords ?? this.wakeWords),
       use24HourClock: use24HourClock ?? this.use24HourClock,
       displayType: displayType ?? this.displayType,
       language: language ?? this.language,
       homeRoom: homeRoom ?? this.homeRoom,
+      enableMusicZone: enableMusicZone ?? this.enableMusicZone,
+      musicZone: musicZone ?? this.musicZone,
+      bridgeAddress: bridgeAddress ?? this.bridgeAddress,
+      showPlayer: showPlayer ?? this.showPlayer,
     );
   }
 
-  factory Settings.fromJson(Map<String, dynamic> json) =>
-      _$SettingsFromJson(json);
+  factory AssistantSettings.fromJson(Map<String, dynamic> json) =>
+      _$AssistantSettingsFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SettingsToJson(this);
+  Map<String, dynamic> toJson() => _$AssistantSettingsToJson(this);
 
   List<String> _checkWords(List<String> words) {
     final list = List<String>.from(words.map((w) => w.trim()));

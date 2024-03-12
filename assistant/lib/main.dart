@@ -15,16 +15,23 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:assistant/context/app.dart';
 import 'package:assistant/context/bloc.dart';
 import 'package:assistant/context/context.dart';
+import 'package:assistant/home/widget.dart';
 import 'package:assistant/settings/model.dart';
 import 'package:assistant/settings/settings.dart';
+import 'package:assistant/settings/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:one_clock/one_clock.dart';
+import 'package:takeout_lib/art/cover.dart';
+import 'package:takeout_lib/player/player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'connect.dart';
 
 Future ensureInitialized() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,7 +62,6 @@ class AssistantAppState extends State<AssistantApp> {
             darkTheme: ThemeData.dark(useMaterial3: true),
             home: Scaffold(
                 resizeToAvoidBottomInset: false,
-                endDrawer: ConfigDrawer(),
                 body: SafeArea(
                     child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
@@ -75,33 +81,93 @@ class AssistantAppState extends State<AssistantApp> {
                                 child: _configButton(),
                               ),
                             ),
-                          if (_configButtonShown)
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Padding(
-                                  padding:
-                                      EdgeInsetsDirectional.only(bottom: 16),
-                                  child: Opacity(
-                                    opacity: 0.3,
-                                    child: Text('Takeout Assistant',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge),
-                                  )),
-                            )
                         ]))))));
   }
 
   Widget _configButton() {
     return Builder(
       builder: (BuildContext context) {
-        return IconButton(
-          icon: Icon(Icons.settings),
-          onPressed: () {
-            Scaffold.of(context).openEndDrawer();
-            setState(() {
-              _configButtonShown = false;
-            });
+        final state = context.watch<AppCubit>().state;
+        return PopupMenuButton(
+          icon: Icon(Icons.more_vert),
+          itemBuilder: (_) {
+            return <PopupMenuEntry<dynamic>>[
+              PopupMenuItem(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                            builder: (_) => SettingsWidget()));
+                  },
+                  child: ListTile(
+                    leading: Icon(Icons.settings),
+                    title: Text('Settings'),
+                  )),
+              PopupMenuItem(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute<void>(
+                            builder: (_) => LightsWidget()));
+                  },
+                  child: ListTile(
+                    leading: Icon(Icons.lightbulb),
+                    title: Text('Lights'),
+                  )),
+              if (state.authenticated == true)
+                PopupMenuItem(
+                    onTap: () {
+                      context.logout();
+                    },
+                    child: ListTile(
+                      leading: Icon(Icons.logout),
+                      title: Text('Logout'),
+                    )),
+              if (state.authenticated == false)
+                PopupMenuItem(
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (_) {
+                            return Dialog(child: ConnectPage());
+                          });
+                    },
+                    child: ListTile(
+                      leading: Icon(Icons.login),
+                      title: Text('Login'),
+                    )),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                  onTap: () {
+                    showAboutDialog(
+                        context: context,
+                        applicationName: 'Takeout Assistant',
+                        applicationVersion: appVersion,
+                        applicationLegalese: 'Copyleft \u00a9 2023-2024 defsub',
+                        children: <Widget>[
+                          InkWell(
+                              child: const Text(
+                                appSource,
+                                style: TextStyle(
+                                    decoration: TextDecoration.underline,
+                                    color: Colors.blueAccent),
+                              ),
+                              onTap: () => launchUrl(Uri.parse(appSource))),
+                          InkWell(
+                              child: const Text(
+                                appHome,
+                                style: TextStyle(
+                                    decoration: TextDecoration.underline,
+                                    color: Colors.blueAccent),
+                              ),
+                              onTap: () => launchUrl(Uri.parse(appHome))),
+                        ]);
+                  },
+                  child: ListTile(
+                    leading: Icon(Icons.info_outline),
+                    title: Text('About'),
+                  )),
+            ];
           },
         );
       },
@@ -109,137 +175,120 @@ class AssistantAppState extends State<AssistantApp> {
   }
 }
 
-class ConfigDrawer extends StatelessWidget {
+class AssistantDisplay extends StatefulWidget {
+  const AssistantDisplay({super.key});
+
+  @override
+  AssistantDisplayState createState() => AssistantDisplayState();
+}
+
+class AssistantDisplayState extends State<AssistantDisplay> with AppBlocState {
+  @override
+  void initState() {
+    super.initState();
+    appInitState(context);
+
+    final settings = context.settings.state.settings;
+    if (settings.host == 'https://example.com') {
+      // TODO need UI to enter host
+      context.settings.host = 'https://takeout.fm';
+    }
+  }
+
+  @override
+  void dispose() {
+    appDispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final settings = context.watch<SettingsCubit>().state.settings;
-    return SafeArea(
-        child: Drawer(
-            child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
+    return OrientationBuilder(builder: (context, orientation) {
+      final state = context.watch<AssistantSettingsCubit>().state;
+      WakelockPlus.disable();
+      switch (state.settings.displayType) {
+        case DisplayType.clock:
+          WakelockPlus.enable();
+          return context.clock.repository.build(context);
+        case DisplayType.basic:
+          // final Brightness brightness = MediaQuery.platformBrightnessOf(context);
+          return Center(
               child: Column(
-                children: <Widget>[
-                  _enumMenu('Display', settings.displayType, DisplayType.values,
-                      (value) {
-                    if (value != null) {
-                      context.settings.displayType = value;
-                    }
-                  }),
-                  if (context.home.state.rooms.isNotEmpty)
-                    _enumMenu('Home Room', settings.homeRoom,
-                        context.home.state.rooms, (value) {
-                      if (value != null) {
-                        context.settings.homeRoom = value;
-                      }
-                    }),
-                  _switch('24-hour Clock', settings.use24HourClock,
-                      (bool value) {
-                    context.settings.use24HourClock = value;
-                  }),
-                  _textField(settings.wakeWords.join(', '), 'Wake Words',
-                      (value) {
-                    context.settings.wakeWords =
-                        value.split(RegExp(r'\s*,\s*'));
-                  }),
-                ],
-              ),
-            ),
-          ),
-          Container(child: Text('Takeout Assistant 0.2.0')),
-          // #version#
-        ],
-      ),
-    )));
-  }
-
-  Widget _switch(String label, bool value, ValueChanged<bool> onChanged) {
-    return Row(
-      children: <Widget>[
-        Expanded(child: Text(label)),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-        ),
-      ],
-    );
-  }
-
-  Widget _enumMenu<T>(
-      String label, T value, List<T> items, ValueChanged<T?> onChanged) {
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: label,
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          isDense: true,
-          onChanged: onChanged,
-          items: items.map((T item) {
-            return DropdownMenuItem<T>(
-              value: item,
-              child: Text(enumToString(item.toString())),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  String enumToString(Object e) => e.toString().split('.').last;
-
-  Widget _textField(
-      String currentValue, String label, ValueChanged<String> onChanged) {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: currentValue,
-        helperText: label,
-      ),
-      onChanged: onChanged,
-    );
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox.shrink(),
+              Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    DigitalClock(
+                      digitalClockTextColor: Colors.white70,
+                      format: state.settings.use24HourClock ? 'HH:mm' : 'h:mm',
+                      textScaleFactor:
+                          orientation == Orientation.landscape ? 8 : 5,
+                      isLive: true,
+                    ),
+                    DigitalClock(
+                      digitalClockTextColor: Colors.white30,
+                      format: 'EEE, MMM d',
+                      textScaleFactor: 2,
+                      isLive: true,
+                    )
+                  ]),
+              if (state.settings.showPlayer)
+                PlayerWidget()
+              else
+                SizedBox.shrink(),
+            ],
+          ));
+      }
+    });
   }
 }
 
-class AssistantDisplay extends StatelessWidget {
+class PlayerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<SettingsCubit>().state;
-    WakelockPlus.disable();
-    switch (state.settings.displayType) {
-      case DisplayType.clock:
-        WakelockPlus.enable();
-        return context.clock.repository.build(context);
-      case DisplayType.basic:
-        // final Brightness brightness = MediaQuery.platformBrightnessOf(context);
-        return Center(
-            child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SvgPicture.asset(width: 200, height: 200, 'assets/images/mic.svg'),
-            Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  DigitalClock(
-                    digitalClockTextColor: Colors.white70,
-                    format: state.settings.use24HourClock ? "HH:mm" : "hh:mm",
-                    textScaleFactor: 3,
-                    isLive: true,
-                  ),
-                  DigitalClock(
-                    digitalClockTextColor: Colors.white24,
-                    format: "EEE, MMM d",
-                    textScaleFactor: 1,
-                    isLive: true,
-                  )
-                ]),
-          ],
-        ));
+    final state = context.watch<Player>().state;
+    final appState = context.watch<AppCubit>().state;
+    if (state is PlayerInit || state is PlayerReady || state is PlayerStop) {
+      return const SizedBox.shrink();
     }
+    final title = state.currentTrack?.title ?? '';
+    final creator = state.currentTrack?.creator ?? '';
+    final image = state.currentTrack?.image ?? '';
+    final double? progress =
+        state is PlayerPositionState ? state.progress : null;
+    if (state is PlayerProcessingState) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Ink(
+            color: appState.backgroundColor,
+            child: ListTile(
+                leading: image.isNotEmpty ? tileCover(context, image) : null,
+                title: title.isNotEmpty ? Text(title) : null,
+                subtitle: creator.isNotEmpty ? Text(creator) : null,
+                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                  IconButton(
+                      icon: state.playing
+                          ? Icon(Icons.pause)
+                          : Icon(Icons.play_arrow),
+                      onPressed: () {
+                        if (state.playing) {
+                          context.player.pause();
+                        } else {
+                          context.player.play();
+                        }
+                      }),
+                  IconButton(
+                      icon: Icon(Icons.skip_next),
+                      onPressed: state.hasNext
+                          ? () => context.player.skipToNext()
+                          : null),
+                ]))),
+        LinearProgressIndicator(value: progress),
+      ]);
+    }
+    return SizedBox.shrink();
   }
 }

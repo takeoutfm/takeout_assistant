@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 enum ResourceType {
   light,
 }
@@ -26,12 +28,27 @@ abstract class Resource {
 
 class Light extends Resource {
   final bool on;
+  final Color color;
+  final double brightness;
 
   Light(
       {required super.id,
       required super.name,
       required super.type,
       required this.on,
+      required this.color,
+      required this.brightness,
       super.room,
       super.zones});
+
+  Light copyWith({bool? on, Color? color, double? brightness}) => Light(
+        id: id,
+        name: name,
+        type: type,
+        room: this.room,
+        zones: this.zones,
+        on: on ?? this.on,
+        color: color ?? this.color,
+        brightness: brightness ?? this.brightness,
+      );
 }

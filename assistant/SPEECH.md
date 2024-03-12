@@ -54,3 +54,22 @@ Note that [volume] can be a number between 0 and 10.
 - set a timer for [minutes] minutes
 - set a timer for [hours] hours
 - cancel|dismiss|stop timer
+
+## Light Commands
+
+- turn on|off all the lights
+- turn on|off the lights
+- turn on|off the light
+- turn on|off the [light]
+- turn on|off the [light] light
+- turn light on|off
+- light on|off
+- set [light] brightness to [brightness]
+- set brightness to [brightness]
+- set brightness [brightness]
+- brightness [brightness]
+- set [light] color to [color]
+- set color to [color]
+- set color [color]
+- color [color]
+

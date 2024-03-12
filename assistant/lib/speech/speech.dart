@@ -88,7 +88,7 @@ class TextEvent extends SpeechEvent {
 
 class SpeechRepository {
   final SpeechProvider _provider;
-  final SettingsRepository settingsRepository;
+  final AssistantSettingsRepository settingsRepository;
 
   SpeechRepository({SpeechProvider? provider, required this.settingsRepository})
       : _provider = provider ?? VoskSpeechProvider(settingsRepository) {

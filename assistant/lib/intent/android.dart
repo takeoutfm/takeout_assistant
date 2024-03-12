@@ -42,7 +42,7 @@ class AndroidAction {
   static final setTimer = 'android.intent.action.SET_TIMER';
 
   static final _builders = <AndroidActionBuilder>[
-    TakeoutIntentBuilder(),
+    // TakeoutIntentBuilder(),
     AlarmIntentBuilder(),
     TimerIntentBuilder(),
   ];

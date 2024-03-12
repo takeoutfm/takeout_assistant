@@ -88,25 +88,25 @@ class EnglishModel extends SpeechModel {
     'twenty-eight': 28,
     'twenty-nine': 29,
     'thirty': 30,
-    'thirty-one': 21,
-    'thirty-two': 22,
-    'thirty-three': 23,
-    'thirty-four': 24,
-    'thirty-five': 25,
-    'thirty-six': 26,
-    'thirty-seven': 27,
-    'thirty-eight': 28,
-    'thirty-nine': 29,
+    'thirty-one': 31,
+    'thirty-two': 32,
+    'thirty-three': 33,
+    'thirty-four': 34,
+    'thirty-five': 35,
+    'thirty-six': 36,
+    'thirty-seven': 37,
+    'thirty-eight': 38,
+    'thirty-nine': 39,
     'forty': 40,
-    'forty-one': 21,
-    'forty-two': 22,
-    'forty-three': 23,
-    'forty-four': 24,
-    'forty-five': 25,
-    'forty-six': 26,
-    'forty-seven': 27,
-    'forty-eight': 28,
-    'forty-nine': 29,
+    'forty-one': 41,
+    'forty-two': 42,
+    'forty-three': 43,
+    'forty-four': 44,
+    'forty-five': 45,
+    'forty-six': 46,
+    'forty-seven': 47,
+    'forty-eight': 48,
+    'forty-nine': 49,
     'fifty': 50,
     'fifty-one': 51,
     'fifty-two': 52,
@@ -298,21 +298,21 @@ class EnglishModel extends SpeechModel {
   String? describe(Intent intent) {
     switch (intent.name) {
       case IntentName.playArtistAlbum:
-        return 'playing ${intent.extras['album']}';
+        return 'playing ${intent[Extra.album]}';
       case IntentName.playArtistPopularSongs:
-        return 'popular ${intent.extras['artist']}';
+        return 'popular ${intent[Extra.artist]}';
       case IntentName.playArtistRadio:
-        return 'playing ${intent.extras['artist']} mix';
+        return 'playing ${intent[Extra.artist]} mix';
       case IntentName.playArtistSong:
-        return 'playing ${intent.extras['song']}';
+        return 'playing ${intent[Extra.song]}';
       case IntentName.playArtistSongs:
-        return 'playing ${intent.extras['artist']}';
+        return 'playing ${intent[Extra.artist]}';
       case IntentName.playAlbum:
-        return 'playing ${intent.extras['album']}';
+        return 'playing ${intent[Extra.album]}';
       case IntentName.playSong:
-        return 'playing ${intent.extras['song']}';
+        return 'playing ${intent[Extra.song]}';
       case IntentName.playRadio:
-        return 'playing ${intent.extras['station']}';
+        return 'playing ${intent[Extra.station]}';
       case IntentName.playSearch:
         return 'playing';
       case IntentName.playerPlay:
@@ -322,7 +322,7 @@ class EnglishModel extends SpeechModel {
       case IntentName.playerNext:
         return 'next';
       case IntentName.volume:
-        return 'volume ${intent.extras['volume']}';
+        return 'volume ${intent[Extra.volumeValue]}';
       case IntentName.volumeUp:
         return 'volume up';
       case IntentName.volumeDown:
@@ -431,7 +431,7 @@ class EnglishModel extends SpeechModel {
           keywords: ['play'],
           required: ['play'],
           regexps: [
-            RegExp(r'^play (?<q>[\w ]+)$'),
+            RegExp(r'^play (?<query>[\w ]+)$'),
           ],
         ),
         IntentModel(
@@ -538,9 +538,9 @@ class EnglishModel extends SpeechModel {
                 r'^(set )?(?<light>[\w ]+) brightness (to )?(?<brightness>[\w ]+)$'),
           ],
           callback: (extras) {
-            final v = _brightness(extras['brightness']);
+            final v = _brightness(extras[Extra.brightness]);
             if (v != null) {
-              extras['brightness_value'] = v;
+              extras[Extra.brightnessValue] = v;
             }
           },
         ),
@@ -555,9 +555,9 @@ class EnglishModel extends SpeechModel {
             RegExp(r'^(set )?(?<light>[\w ]+) color (to )?(?<color>[\w ]+)$'),
           ],
           callback: (extras) {
-            final v = _color(extras['color']);
+            final v = _color(extras[Extra.color]);
             if (v != null) {
-              extras['color_value'] = v;
+              extras[Extra.colorValue] = v;
             }
           },
         ),
@@ -594,9 +594,9 @@ class EnglishModel extends SpeechModel {
             RegExp(r'^(set )?volume (to )?(?<volume>[\w ]+)$'),
           ],
           callback: (extras) {
-            final v = _volume(extras['volume']);
+            final v = _volume(extras[Extra.volume]);
             if (v != null) {
-              extras['scaled_volume'] = v;
+              extras[Extra.volumeValue] = v;
             }
           },
         ),
@@ -608,10 +608,10 @@ class EnglishModel extends SpeechModel {
             RegExp(r'^set (an )?alarm (for )?(?<time>[\w ]+)$'),
           ],
           callback: (extras) {
-            final t = _time(extras['time']);
+            final t = _time(extras[Extra.time]);
             if (t != null) {
-              extras['hour'] = t.hour;
-              extras['minutes'] = t.minute;
+              extras[Extra.hour] = t.hour;
+              extras[Extra.minutes] = t.minute;
             }
           },
         ),
@@ -628,9 +628,9 @@ class EnglishModel extends SpeechModel {
             RegExp(r'^set (a )?timer (for )?(?<duration>[\w ]+)$'),
           ],
           callback: (extras) {
-            final d = _duration(extras['duration']);
+            final d = _duration(extras[Extra.duration]);
             if (d != null) {
-              extras['seconds'] = d.inSeconds;
+              extras[Extra.seconds] = d.inSeconds;
             }
           },
         ),

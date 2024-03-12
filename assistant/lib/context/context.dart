@@ -24,8 +24,15 @@ import 'package:assistant/speech/speech.dart';
 import 'package:assistant/torch/light.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:takeout_lib/tokens/tokens.dart';
+
+import 'app.dart';
+
+export 'package:takeout_lib/context/context.dart';
 
 extension AppContext on BuildContext {
+  AppCubit get app => read<AppCubit>();
+
   AmbientLightCubit get ambientLight => read<AmbientLightCubit>();
 
   VolumeCubit get volume => read<VolumeCubit>();
@@ -36,7 +43,12 @@ extension AppContext on BuildContext {
 
   ClockCubit get clock => read<ClockCubit>();
 
-  SettingsCubit get settings => read<SettingsCubit>();
+  AssistantSettingsCubit get assistantSettings => read<AssistantSettingsCubit>();
 
   HomeCubit get home => read<HomeCubit>();
+
+  void logout() {
+    read<TokensCubit>().removeAll();
+    app.logout();
+  }
 }

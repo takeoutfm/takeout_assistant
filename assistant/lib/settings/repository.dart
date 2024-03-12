@@ -18,18 +18,18 @@
 import 'model.dart';
 import 'settings.dart';
 
-class SettingsRepository {
-  SettingsCubit? cubit;
+class AssistantSettingsRepository {
+  AssistantSettingsCubit? cubit;
 
-  void init(SettingsCubit cubit) {
+  void init(AssistantSettingsCubit cubit) {
     this.cubit = cubit;
   }
 
-  Stream<Settings>? get stream {
+  Stream<AssistantSettings>? get stream {
     return cubit?.stream.map((state) => state.settings);
   }
 
-  Settings? get settings {
+  AssistantSettings? get settings {
     return cubit?.state.settings;
   }
 }

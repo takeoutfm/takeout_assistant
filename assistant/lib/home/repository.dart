@@ -13,7 +13,9 @@ class HomeRepository {
 
   Future<bool> authRequired() async => _provider.authRequired();
 
-  Future<void> discover() async => _provider.discover();
+  Future<void> discover({String? defaultBridge}) async => _provider.discover(defaultBridge: defaultBridge);
+
+  Future<void> fetchNetwork() async => _provider.fetchNetwork();
 
   List<Light> get lights => _provider.lights;
 
@@ -35,4 +37,7 @@ class HomeRepository {
 
   Future<void> lightColor(Light light, Color color) =>
       _provider.lightColor(light, color);
+
+  Future<void> zoneColor(String name, Color color) =>
+      _provider.zoneColor(name, color);
 }

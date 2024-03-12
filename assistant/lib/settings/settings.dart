@@ -23,52 +23,78 @@ import 'model.dart';
 part 'settings.g.dart';
 
 @JsonSerializable()
-class SettingsState {
-  final Settings settings;
+class AssistantSettingsState {
+  final AssistantSettings settings;
 
-  SettingsState(this.settings);
+  AssistantSettingsState(this.settings);
 
-  factory SettingsState.fromJson(Map<String, dynamic> json) =>
-      _$SettingsStateFromJson(json);
+  factory AssistantSettingsState.fromJson(Map<String, dynamic> json) =>
+      _$AssistantSettingsStateFromJson(json);
 
-  Map<String, dynamic> toJson() => _$SettingsStateToJson(this);
+  Map<String, dynamic> toJson() => _$AssistantSettingsStateToJson(this);
 }
 
-class SettingsCubit extends HydratedCubit<SettingsState> {
-  SettingsCubit() : super(SettingsState(Settings.initial()));
+class AssistantSettingsCubit extends HydratedCubit<AssistantSettingsState> {
+  AssistantSettingsCubit()
+      : super(AssistantSettingsState(AssistantSettings.initial()));
 
   void add({
     List<String>? wakeWords,
   }) =>
-      emit(SettingsState(state.settings.copyWith(
+      emit(AssistantSettingsState(state.settings.copyWith(
         wakeWords: wakeWords,
       )));
 
+  set enableWakeWords(bool enabled) {
+    emit(AssistantSettingsState(
+        state.settings.copyWith(enableWakeWords: enabled)));
+  }
+
   set wakeWords(List<String> wakeWords) {
-    emit(SettingsState(state.settings.copyWith(wakeWords: wakeWords)));
+    emit(AssistantSettingsState(state.settings.copyWith(wakeWords: wakeWords)));
   }
 
   set use24HourClock(bool value) {
-    emit(SettingsState(state.settings.copyWith(use24HourClock: value)));
+    emit(
+        AssistantSettingsState(state.settings.copyWith(use24HourClock: value)));
   }
 
   set language(String language) {
-    emit(SettingsState(state.settings.copyWith(language: language)));
+    emit(AssistantSettingsState(state.settings.copyWith(language: language)));
   }
 
   set displayType(DisplayType displayType) {
-    emit(SettingsState(state.settings.copyWith(displayType: displayType)));
+    emit(AssistantSettingsState(
+        state.settings.copyWith(displayType: displayType)));
   }
 
   set homeRoom(String homeRoom) {
-    emit(SettingsState(state.settings.copyWith(homeRoom: homeRoom)));
+    emit(AssistantSettingsState(state.settings.copyWith(homeRoom: homeRoom)));
+  }
+
+  set enableMusicZone(bool enabled) {
+    emit(AssistantSettingsState(
+        state.settings.copyWith(enableMusicZone: enabled)));
+  }
+
+  set musicZone(String musicZone) {
+    emit(AssistantSettingsState(state.settings.copyWith(musicZone: musicZone)));
+  }
+
+  set bridgeAddress(String? address) {
+    emit(AssistantSettingsState(
+        state.settings.copyWith(bridgeAddress: address)));
+  }
+
+  set showPlayer(bool enabled) {
+    emit(AssistantSettingsState(state.settings.copyWith(showPlayer: enabled)));
   }
 
   @override
-  SettingsState fromJson(Map<String, dynamic> json) =>
-      SettingsState.fromJson(json['settings'] as Map<String, dynamic>);
+  AssistantSettingsState fromJson(Map<String, dynamic> json) =>
+      AssistantSettingsState.fromJson(json['settings'] as Map<String, dynamic>);
 
   @override
-  Map<String, dynamic>? toJson(SettingsState state) =>
+  Map<String, dynamic>? toJson(AssistantSettingsState state) =>
       {'settings': state.toJson()};
 }

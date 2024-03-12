@@ -6,8 +6,9 @@ using Android intents.
 
 Features include:
 
-- Supports music playlist & playback commands that are dispatched to the [Takeout Mobile app](https://github.com/takeoutfm/takeout_app)
+- Supports music playlist & playback commands using Takeout
 - Volume control commands
+- Hue light control commands
 - Wake-words are optional, speak naturally, it's all offline and locally processed
 - Lava Clock from the Flutter 2020 clock challenge (@jamesblasco)
 - Vosk offline speech recognition (english small model)
