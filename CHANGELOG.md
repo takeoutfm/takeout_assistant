@@ -1,3 +1,9 @@
+## 0.3.x
+
+- Fix user agent
+- Show light color when off
+- Add color picker
+
 ## 0.3.0
 
 - Enable wakelock

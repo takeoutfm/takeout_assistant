@@ -18,7 +18,7 @@
 import 'package:assistant/settings/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:assistant/context/context.dart';
+import 'package:assistant/app/context.dart';
 import 'package:assistant/home/home.dart';
 
 import 'model.dart';

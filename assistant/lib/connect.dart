@@ -15,13 +15,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:assistant/app/context.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:takeout_lib/api/client.dart';
 import 'package:takeout_lib/api/model.dart';
 import 'package:takeout_lib/page/page.dart';
-import 'package:assistant/context/context.dart';
 
 class ConnectPage extends StatelessWidget {
   const ConnectPage({super.key});
@@ -91,8 +91,7 @@ class CodePage extends ClientPage<AccessCode> {
             const SizedBox(height: 16),
             Text(state.code),
             TextButton(
-                child: Text('Next'),
-                onPressed: () => check(context, state)),
+                child: Text('Next'), onPressed: () => check(context, state)),
           ],
         ),
       ),

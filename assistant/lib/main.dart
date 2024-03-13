@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
 
-import 'package:assistant/context/app.dart';
-import 'package:assistant/context/bloc.dart';
-import 'package:assistant/context/context.dart';
+import 'package:assistant/app/app.dart';
+import 'package:assistant/app/bloc.dart';
+import 'package:assistant/app/context.dart';
 import 'package:assistant/home/widget.dart';
 import 'package:assistant/settings/model.dart';
 import 'package:assistant/settings/settings.dart';
@@ -28,8 +28,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:one_clock/one_clock.dart';
 import 'package:takeout_lib/art/cover.dart';
 import 'package:takeout_lib/player/player.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'connect.dart';
 

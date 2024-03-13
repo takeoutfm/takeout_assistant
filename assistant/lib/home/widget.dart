@@ -17,8 +17,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:assistant/context/context.dart';
+import 'package:assistant/app/context.dart';
 import 'package:assistant/home/home.dart';
+import 'package:flex_color_picker/flex_color_picker.dart';
 
 class LightsWidget extends StatelessWidget {
   @override
@@ -33,12 +34,19 @@ class LightsWidget extends StatelessWidget {
                   ListTile(
                     leading: light.on
                         ? Icon(Icons.lightbulb, size: 64, color: light.color)
-                        : Icon(Icons.lightbulb_outline, size: 64),
+                        : Icon(Icons.lightbulb_outline,
+                            size: 64, color: light.color),
                     title: Text('${light.name} (${light.room})'),
                     subtitle: Text('Zones: ${light.zones.join(", ")}'),
                     trailing: Switch(
                         value: light.on,
                         onChanged: (_) => context.home.toggleLight(light)),
+                    onTap: () async {
+                      final color = await showColorPickerDialog(context, light.color);
+                      if (color != light.color) {
+                        context.home.lightColor(light, color);
+                      }
+                    },
                   ),
                   Slider(
                     value: light.brightness,

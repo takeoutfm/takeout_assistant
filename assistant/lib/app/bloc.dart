@@ -19,14 +19,13 @@ import 'dart:io';
 
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:assistant/ambient/light.dart';
+import 'package:assistant/app/context.dart';
 import 'package:assistant/audio/volume.dart';
 import 'package:assistant/clock/clock.dart';
-import 'package:assistant/context/context.dart';
 import 'package:assistant/home/home.dart';
 import 'package:assistant/home/repository.dart';
 import 'package:assistant/intent/android.dart';
 import 'package:assistant/intent/model.dart';
-import 'package:assistant/main.dart';
 import 'package:assistant/settings/repository.dart';
 import 'package:assistant/settings/settings.dart';
 import 'package:assistant/speech/model.dart';
@@ -42,8 +41,12 @@ import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:nested/nested.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:takeout_lib/art/builder.dart';
+import 'package:takeout_lib/cache/json_repository.dart';
+import 'package:takeout_lib/client/repository.dart';
 import 'package:takeout_lib/context/bloc.dart';
 import 'package:takeout_lib/player/player.dart';
+import 'package:takeout_lib/settings/repository.dart';
+import 'package:takeout_lib/tokens/repository.dart';
 import 'package:takeout_lib/tokens/tokens.dart';
 
 import 'app.dart';
@@ -67,6 +70,22 @@ class AppBloc extends TakeoutBloc {
             providers: blocs(),
             child: MultiBlocListener(
                 listeners: listeners(context), child: child)));
+  }
+
+  @override
+  ClientRepository createClientRepository({
+    required SettingsRepository settingsRepository,
+    required TokenRepository tokenRepository,
+    required JsonCacheRepository jsonCacheRepository,
+    String? userAgent,
+  }) {
+    return super.createClientRepository(
+      userAgent:
+          'Takeout-Assistant/$appVersion (takeoutfm.com; ${Platform.operatingSystem})',
+      settingsRepository: settingsRepository,
+      tokenRepository: tokenRepository,
+      jsonCacheRepository: jsonCacheRepository,
+    );
   }
 
   @override
@@ -220,7 +239,7 @@ class AppBloc extends TakeoutBloc {
     if (settings.enableMusicZone == false) {
       return;
     }
-    
+
     final color = context.app.state.backgroundColor;
     final name = settings.musicZone;
     if (name != null && color != null) {
