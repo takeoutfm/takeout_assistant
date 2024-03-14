@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:assistant/app/context.dart';
 import 'package:assistant/home/home.dart';
+import 'package:takeout_lib/settings/settings.dart';
 
 import 'model.dart';
 
@@ -145,28 +146,30 @@ class SettingsWidget extends StatelessWidget {
               ],
             )),
             Card(
-                child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                ListTile(
-                  leading: const Icon(Icons.key),
-                  title: Text('ListenBrainz Token'),
-                  subtitle: _TokenField(
-                    initialValue:
-                        context.settings.state.settings.listenBrainzToken,
-                    onChanged: (value) {
-                      context.settings.listenBrainzToken = value;
-                    },
-                  ),
-                  trailing: Switch(
-                    value: context.settings.state.settings.enableListenBrainz,
-                    onChanged: (value) {
-                      context.settings.enabledListenBrainz = value;
-                    },
-                  ),
-                ),
-              ],
-            )),
+                child: BlocBuilder<SettingsCubit, SettingsState>(
+                    builder: (context, settingsState) => Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            ListTile(
+                              leading: const Icon(Icons.key),
+                              title: Text('ListenBrainz Token'),
+                              subtitle: _TokenField(
+                                initialValue:
+                                    settingsState.settings.listenBrainzToken,
+                                onChanged: (value) {
+                                  context.settings.listenBrainzToken = value;
+                                },
+                              ),
+                              trailing: Switch(
+                                value:
+                                    settingsState.settings.enableListenBrainz,
+                                onChanged: (value) {
+                                  context.settings.enabledListenBrainz = value;
+                                },
+                              ),
+                            ),
+                          ],
+                        ))),
           ])));
     });
   }

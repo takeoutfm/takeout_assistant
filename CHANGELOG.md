@@ -1,8 +1,9 @@
-## 0.3.x
+## 0.3.1
 
 - Fix user agent
 - Show light color when off
 - Add color picker
+- Fix ListenBrainz settings
 
 ## 0.3.0
 
