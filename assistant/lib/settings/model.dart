@@ -31,6 +31,7 @@ class AssistantSettings {
   static const defaultLanguage = 'en';
 
   final bool enableWakeWords;
+  final bool enableSpeechRecognition;
   final List<String> wakeWords;
   final bool use24HourClock;
   final String language;
@@ -51,7 +52,8 @@ class AssistantSettings {
       this.enableMusicZone = false,
       this.musicZone,
       this.bridgeAddress,
-      this.showPlayer = true});
+      this.showPlayer = true,
+      this.enableSpeechRecognition = true});
 
   factory AssistantSettings.initial() => AssistantSettings(
         enableWakeWords: false,
@@ -72,6 +74,7 @@ class AssistantSettings {
     String? musicZone,
     String? bridgeAddress,
     bool? showPlayer,
+    bool? enableSpeechRecognition,
   }) {
     return AssistantSettings(
       enableWakeWords: enableWakeWords ?? this.enableWakeWords,
@@ -84,6 +87,8 @@ class AssistantSettings {
       musicZone: musicZone ?? this.musicZone,
       bridgeAddress: bridgeAddress ?? this.bridgeAddress,
       showPlayer: showPlayer ?? this.showPlayer,
+      enableSpeechRecognition:
+          enableSpeechRecognition ?? this.enableSpeechRecognition,
     );
   }
 

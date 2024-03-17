@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
 
+import 'package:colornames/colornames.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:assistant/app/context.dart';
@@ -32,17 +33,21 @@ class LightsWidget extends StatelessWidget {
             ...state.lights.map((light) => Card(
                     child: Column(children: [
                   ListTile(
-                    leading: light.on
-                        ? Icon(Icons.lightbulb, size: 64, color: light.color)
-                        : Icon(Icons.lightbulb_outline,
-                            size: 64, color: light.color),
+                    leading: Column(children: [
+                      light.on
+                          ? Icon(Icons.lightbulb, size: 48, color: light.color)
+                          : Icon(Icons.lightbulb_outline,
+                              size: 48, color: light.color),
+                      Text(light.color.colorName),
+                    ]),
                     title: Text('${light.name} (${light.room})'),
-                    subtitle: Text('Zones: ${light.zones.join(", ")}'),
+                    subtitle: Text('${light.zones.join(", ")}'),
                     trailing: Switch(
                         value: light.on,
                         onChanged: (_) => context.home.toggleLight(light)),
                     onTap: () async {
-                      final color = await showColorPickerDialog(context, light.color);
+                      final color =
+                          await showColorPickerDialog(context, light.color);
                       if (color != light.color) {
                         context.home.lightColor(light, color);
                       }

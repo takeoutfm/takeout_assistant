@@ -37,25 +37,17 @@ class SettingsWidget extends StatelessWidget {
           body: SingleChildScrollView(
               child: Column(children: [
             Card(
-                child:
-                    Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
-              _switchTile(Icons.access_time, '24-hour Clock', '',
-                  state.settings.use24HourClock, (value) {
-                context.assistantSettings.use24HourClock = value;
-              }),
-            ])),
-            Card(
-                child:
-                    Column(mainAxisSize: MainAxisSize.min, children: <Widget>[
-              _switchTile(Icons.play_arrow, 'Display Player', '',
-                  state.settings.showPlayer, (value) {
-                context.assistantSettings.showPlayer = value;
-              }),
-            ])),
-            Card(
                 child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                _switchTile(Icons.access_time, '24-hour Clock', '',
+                    state.settings.use24HourClock, (value) {
+                  context.assistantSettings.use24HourClock = value;
+                }),
+                _switchTile(Icons.play_arrow, 'Display Player', '',
+                    state.settings.showPlayer, (value) {
+                  context.assistantSettings.showPlayer = value;
+                }),
                 ListTile(
                   leading: const Icon(Icons.settings_display),
                   title: Text('Clock Display'),
@@ -79,6 +71,43 @@ class SettingsWidget extends StatelessWidget {
                 child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                FutureBuilder(
+                    future: context.home.repository.authRequired(),
+                    builder: (context, snapshot) {
+                      final authRequired = snapshot.data;
+                      if (authRequired == true) {
+                        return ListTile(
+                          leading: const Icon(Icons.control_point),
+                          title: Text('Hue Bridge'),
+                          subtitle: _TextField(
+                            hintText: 'Enter IP address or refresh',
+                            initialValue: state.settings.bridgeAddress,
+                            onChanged: (value) {
+                              value = value.trim();
+                              context.assistantSettings.bridgeAddress = value;
+                              if (value.isNotEmpty) {
+                                context.home.discover();
+                              }
+                            },
+                          ),
+                          trailing: IconButton(
+                            icon: Icon(Icons.refresh),
+                            onPressed: () => context.home.discover(),
+                          ),
+                        );
+                      } else if (authRequired == false) {
+                        return ListTile(
+                          leading: const Icon(Icons.control_point),
+                          title: Text('Hue Bridge Found'),
+                          subtitle: Text('Refresh to discover new devices'),
+                          trailing: IconButton(
+                            icon: Icon(Icons.refresh),
+                            onPressed: () => context.home.refresh(),
+                          ),
+                        );
+                      }
+                      return SizedBox.shrink();
+                    }),
                 ListTile(
                   leading: const Icon(Icons.home),
                   title: Text('Home Room'),
@@ -93,12 +122,6 @@ class SettingsWidget extends StatelessWidget {
                     },
                   ),
                 ),
-              ],
-            )),
-            Card(
-                child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
                 _switchTile(
                     Icons.music_note,
                     'Enable Music Zone',
@@ -126,8 +149,17 @@ class SettingsWidget extends StatelessWidget {
                 child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
+                _switchTile(
+                    state.settings.enableSpeechRecognition
+                        ? Icons.mic
+                        : Icons.mic_off,
+                    'Speech Recognition',
+                    '',
+                    state.settings.enableSpeechRecognition,
+                    (value) => context
+                        .assistantSettings.enableSpeechRecognition = value),
                 ListTile(
-                  leading: const Icon(Icons.mic),
+                  leading: const Icon(Icons.settings_voice),
                   title: Text('Wake Words'),
                   subtitle: _TextField(
                     initialValue: state.settings.wakeWords.join(' '),
@@ -165,6 +197,17 @@ class SettingsWidget extends StatelessWidget {
                                     settingsState.settings.enableListenBrainz,
                                 onChanged: (value) {
                                   context.settings.enabledListenBrainz = value;
+                                },
+                              ),
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.cloud_outlined),
+                              title: Text('Takeout Host'),
+                              subtitle: _TextField(
+                                initialValue: settingsState.settings.host,
+                                readOnly: context.app.state.authenticated,
+                                onChanged: (value) {
+                                  context.settings.host = value.trim();
                                 },
                               ),
                             ),
@@ -207,14 +250,22 @@ class _Dropdown extends StatelessWidget {
 class _TextField extends StatelessWidget {
   final String? initialValue;
   final void Function(String) onChanged;
+  final bool readOnly;
+  final String? hintText;
 
-  const _TextField({this.initialValue, required this.onChanged});
+  const _TextField(
+      {this.initialValue,
+      required this.onChanged,
+      this.readOnly = false,
+      this.hintText});
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       onChanged: onChanged,
       initialValue: initialValue,
+      readOnly: readOnly,
+      decoration: hintText != null ? InputDecoration(hintText: hintText) : null,
     );
   }
 }

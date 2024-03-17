@@ -1,3 +1,12 @@
+## 0.4.0
+
+- Bridge discover & refresh settings
+- Takeout host settings
+- Show light color name
+- Turn on/off speech recognition
+- Dim/brighten screen based on ambient lux
+- Always enable wakelock
+
 ## 0.3.1
 
 - Fix user agent

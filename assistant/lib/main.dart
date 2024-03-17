@@ -203,15 +203,14 @@ class AssistantDisplayState extends State<AssistantDisplay> with AppBlocState {
 
   @override
   Widget build(BuildContext context) {
+    WakelockPlus.enable(); // consider settings
     return OrientationBuilder(builder: (context, orientation) {
       final state = context.watch<AssistantSettingsCubit>().state;
-      WakelockPlus.disable();
       switch (state.settings.displayType) {
         case DisplayType.clock:
-          WakelockPlus.enable();
-          return context.clock.repository.build(context);
+          return context.clock.repository.build(context,
+              child: state.settings.showPlayer ? PlayerWidget() : null);
         case DisplayType.basic:
-          // final Brightness brightness = MediaQuery.platformBrightnessOf(context);
           return Center(
               child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -234,7 +233,21 @@ class AssistantDisplayState extends State<AssistantDisplay> with AppBlocState {
                       format: 'EEE, MMM d',
                       textScaleFactor: 2,
                       isLive: true,
-                    )
+                    ),
+                    if (state.settings.enableSpeechRecognition)
+                      IconButton(
+                          icon: Icon(Icons.mic),
+                          onPressed: () {
+                            context.assistantSettings.enableSpeechRecognition =
+                                false;
+                          })
+                    else
+                      IconButton(
+                          icon: Icon(Icons.mic_off),
+                          onPressed: () {
+                            context.assistantSettings.enableSpeechRecognition =
+                                true;
+                          })
                   ]),
               if (state.settings.showPlayer)
                 PlayerWidget()
@@ -261,33 +274,38 @@ class PlayerWidget extends StatelessWidget {
     final double? progress =
         state is PlayerPositionState ? state.progress : null;
     if (state is PlayerProcessingState) {
-      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Ink(
-            color: appState.backgroundColor,
-            child: ListTile(
-                leading: image.isNotEmpty ? tileCover(context, image) : null,
-                title: title.isNotEmpty ? Text(title) : null,
-                subtitle: creator.isNotEmpty ? Text(creator) : null,
-                trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                  IconButton(
-                      icon: state.playing
-                          ? Icon(Icons.pause)
-                          : Icon(Icons.play_arrow),
-                      onPressed: () {
-                        if (state.playing) {
-                          context.player.pause();
-                        } else {
-                          context.player.play();
-                        }
-                      }),
-                  IconButton(
-                      icon: Icon(Icons.skip_next),
-                      onPressed: state.hasNext
-                          ? () => context.player.skipToNext()
-                          : null),
-                ]))),
-        LinearProgressIndicator(value: progress),
-      ]);
+      return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Ink(
+                // color: appState.backgroundColor,
+                child: ListTile(
+                    leading:
+                        image.isNotEmpty ? tileCover(context, image) : null,
+                    title: title.isNotEmpty ? Text(title) : null,
+                    subtitle: creator.isNotEmpty ? Text(creator) : null,
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(
+                          icon: state.playing
+                              ? Icon(Icons.pause)
+                              : Icon(Icons.play_arrow),
+                          onPressed: () {
+                            if (state.playing) {
+                              context.player.pause();
+                            } else {
+                              context.player.play();
+                            }
+                          }),
+                      IconButton(
+                          icon: Icon(Icons.skip_next),
+                          onPressed: state.hasNext
+                              ? () => context.player.skipToNext()
+                              : null),
+                    ]))),
+            if (state.spiff.isStream() == false)
+              LinearProgressIndicator(value: progress),
+          ]);
     }
     return SizedBox.shrink();
   }

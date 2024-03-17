@@ -24,8 +24,12 @@ import 'vosk.dart';
 class SpeechState {
   final bool awake;
   final String text;
+  final bool paused;
 
-  SpeechState(this.awake, this.text);
+  SpeechState(this.awake, this.text, {this.paused = false});
+
+  void copyWith({bool? paused}) =>
+      SpeechState(this.awake, this.text, paused: paused ?? this.paused);
 }
 
 class SpeechAsleep extends SpeechState {
@@ -38,6 +42,14 @@ class SpeechAwake extends SpeechState {
 
 class SpeechText extends SpeechState {
   SpeechText(String text) : super(true, text);
+}
+
+class SpeechPause extends SpeechState {
+  SpeechPause() : super(false, '', paused: true);
+}
+
+class SpeechResume extends SpeechState {
+  SpeechResume() : super(false, '', paused: false);
 }
 
 class SpeechCubit extends Cubit<SpeechState> {
@@ -61,17 +73,15 @@ class SpeechCubit extends Cubit<SpeechState> {
     });
   }
 
-// void awake() {
-//   emit(SpeechState(true, ''));
-// }
+  void pause() {
+    repository.stop();
+    emit(SpeechPause());
+  }
 
-// void text(String text) {
-//   emit(SpeechState(false, text));
-// }
-
-// void start() {}
-//
-// void stop() {}
+  void resume() {
+    repository.start();
+    emit(SpeechResume());
+  }
 }
 
 abstract class SpeechEvent {}
@@ -97,9 +107,21 @@ class SpeechRepository {
 
   void _init() {
     _provider.init();
+    if (settingsRepository.settings?.enableSpeechRecognition ?? false) {
+      // restore previous state
+      _provider.start();
+    }
   }
 
   Stream<SpeechEvent> get stream => _provider.stream;
+
+  void pause() => _provider.pause();
+
+  void resume() => _provider.resume();
+
+  void stop() => _provider.stop();
+
+  void start() => _provider.start();
 }
 
 abstract class SpeechProvider {

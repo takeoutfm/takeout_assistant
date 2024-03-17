@@ -50,6 +50,11 @@ class AssistantSettingsCubit extends HydratedCubit<AssistantSettingsState> {
         state.settings.copyWith(enableWakeWords: enabled)));
   }
 
+  set enableSpeechRecognition(bool enabled) {
+    emit(AssistantSettingsState(
+        state.settings.copyWith(enableSpeechRecognition: enabled)));
+  }
+
   set wakeWords(List<String> wakeWords) {
     emit(AssistantSettingsState(state.settings.copyWith(wakeWords: wakeWords)));
   }

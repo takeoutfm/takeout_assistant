@@ -120,11 +120,12 @@ class ClockRepository {
 
   void setPaused(bool paused) => _provider.setPaused(paused);
 
-  Widget build(BuildContext context) => _provider.build(context);
+  Widget build(BuildContext context, {Widget? child}) =>
+      _provider.build(context, child: child);
 }
 
 abstract class ClockProvider {
-  Widget build(BuildContext context);
+  Widget build(BuildContext context, {Widget? child});
 
   void setEnabled(bool enabled);
 
@@ -138,11 +139,19 @@ class LavaClockProvider extends ClockProvider {
   final model = ClockModel();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, {Widget? child}) {
     clock = ClockFrame(
         key: clockFrameKey,
-        child: (controller) =>
-            LavaClock(model, animationController: controller));
+        child: (controller) => Stack(
+              fit: StackFit.expand,
+              children: [
+                LavaClock(model, animationController: controller),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: child,
+                )
+              ],
+            ));
     return clock;
   }
 

@@ -52,7 +52,6 @@ class VoskSpeechProvider implements SpeechProvider {
       // _speechService?.onPartial().listen((event) {
       //   print('partial $event');
       // });
-      start();
     } catch (e, stack) {
       print(e);
       print(stack);

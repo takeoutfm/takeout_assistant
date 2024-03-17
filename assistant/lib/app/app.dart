@@ -20,7 +20,7 @@ import 'dart:ui';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:takeout_lib/spiff/model.dart';
 
-const appVersion = '0.3.1'; // #version#
+const appVersion = '0.4.0'; // #version#
 const appSource = 'https://github.com/takeoutfm/takeout_assistant';
 const appHome = 'https://takeoutfm.com/';
 

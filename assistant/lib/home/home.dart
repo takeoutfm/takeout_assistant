@@ -64,7 +64,15 @@ class HomeCubit extends Cubit<HomeState> {
             fontSize: 16.0);
       }
     });
+    discover();
+  }
+
+  void discover() {
     repository.discover().then((_) => _fetchNetwork());
+  }
+
+  void refresh() {
+    repository.fetchNetwork().then((_) => _emit());
   }
 
   void _fetchNetwork() {

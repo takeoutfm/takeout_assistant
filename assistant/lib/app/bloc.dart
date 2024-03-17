@@ -48,6 +48,7 @@ import 'package:takeout_lib/player/player.dart';
 import 'package:takeout_lib/settings/repository.dart';
 import 'package:takeout_lib/tokens/repository.dart';
 import 'package:takeout_lib/tokens/tokens.dart';
+import 'package:screen_brightness/screen_brightness.dart';
 
 import 'app.dart';
 
@@ -173,8 +174,16 @@ class AppBloc extends TakeoutBloc {
         }
       }),
       BlocListener<AmbientLightCubit, AmbientLightState>(
-          listener: (context, state) {
-        // print('ambient light lux is ${state.lux}');
+          listenWhen: (prevState, state) {
+        return prevState.isLight() != state.isLight();
+      }, listener: (context, state) {
+        if (state.isDark()) {
+          print('dimming screen');
+          ScreenBrightness.instance.setScreenBrightness(0.0);
+        } else if (state.isLight()) {
+          print('brightening screen');
+          ScreenBrightness.instance.setScreenBrightness(1.0);
+        }
       }),
       BlocListener<VolumeCubit, VolumeState>(listener: (context, state) {
         print('volume is ${state.volume}, was ${state.previousVolume}');
@@ -198,6 +207,20 @@ class AppBloc extends TakeoutBloc {
               _handleText(context, state);
             }
           }),
+      BlocListener<AssistantSettingsCubit, AssistantSettingsState>(
+        listenWhen: (prevState, state) {
+          return prevState.settings.enableSpeechRecognition !=
+              state.settings.enableSpeechRecognition;
+        },
+        listener: (context, state) {
+          // pause/resume speech recognition based on settings
+          if (state.settings.enableSpeechRecognition) {
+            context.speech.resume();
+          } else {
+            context.speech.pause();
+          }
+        },
+      ),
       BlocListener<Player, PlayerState>(
           listenWhen: (_, state) =>
               state is PlayerLoad || state is PlayerIndexChange,
@@ -230,7 +253,7 @@ class AppBloc extends TakeoutBloc {
           // update lights when # of lights changes
           _updateMusicZone(context);
         },
-      )
+      ),
     ];
   }
 
