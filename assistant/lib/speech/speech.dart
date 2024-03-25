@@ -1,19 +1,19 @@
 // Copyright 2023 defsub
 //
-// This file is part of Takeout.
+// This file is part of TakeoutFM.
 //
-// Takeout is free software: you can redistribute it and/or modify it under the
+// TakeoutFM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU Affero General Public License as published by the Free
 // Software Foundation, either version 3 of the License, or (at your option)
 // any later version.
 //
-// Takeout is distributed in the hope that it will be useful, but WITHOUT ANY
+// TakeoutFM is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 // FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for
 // more details.
 //
 // You should have received a copy of the GNU Affero General Public License
-// along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
+// along with TakeoutFM.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'dart:async';
 
@@ -53,14 +53,13 @@ class SpeechResume extends SpeechState {
 }
 
 class SpeechCubit extends Cubit<SpeechState> {
-  final SpeechRepository repository;
+  late SpeechRepository _repository;
 
-  SpeechCubit(this.repository) : super(SpeechState(false, '')) {
-    _init();
-  }
+  SpeechCubit() : super(SpeechState(false, ''));
 
-  void _init() {
-    repository.stream.listen((event) {
+  void init(SpeechRepository repository) {
+    _repository = repository;
+    _repository.stream.listen((event) {
       if (event is WakeWordEvent) {
         emit(SpeechAwake());
       } else if (event is ListeningEvent) {
@@ -74,12 +73,12 @@ class SpeechCubit extends Cubit<SpeechState> {
   }
 
   void pause() {
-    repository.stop();
+    _repository.stop();
     emit(SpeechPause());
   }
 
   void resume() {
-    repository.start();
+    _repository.start();
     emit(SpeechResume());
   }
 }
@@ -97,20 +96,17 @@ class TextEvent extends SpeechEvent {
 }
 
 class SpeechRepository {
-  final SpeechProvider _provider;
-  final AssistantSettingsRepository settingsRepository;
+  late SpeechProvider _provider;
 
-  SpeechRepository({SpeechProvider? provider, required this.settingsRepository})
-      : _provider = provider ?? VoskSpeechProvider(settingsRepository) {
-    _init();
-  }
-
-  void _init() {
-    _provider.init();
-    if (settingsRepository.settings?.enableSpeechRecognition ?? false) {
-      // restore previous state
-      _provider.start();
-    }
+  void init(AssistantSettingsRepository assistantSettingsRepository) {
+    _provider = VoskSpeechProvider(assistantSettingsRepository);
+    _provider.init().then((_) {
+      if (assistantSettingsRepository.settings?.enableSpeechRecognition ??
+          false) {
+        // restore previous state
+        _provider.start();
+      }
+    });
   }
 
   Stream<SpeechEvent> get stream => _provider.stream;
@@ -125,7 +121,7 @@ class SpeechRepository {
 }
 
 abstract class SpeechProvider {
-  void init();
+  Future<void> init();
 
   void start();
 

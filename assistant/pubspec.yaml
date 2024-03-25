@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   takeout_lib:
     path: ../../takeout_app/takeout_lib/
   bloc: ^8.1.3
@@ -36,6 +38,7 @@ dependencies:
   colornames: ^0.1.0
   flex_color_picker: ^3.4.0
   screen_brightness: ^1.0.0
+  battery_plus: ^5.0.3
 
 dev_dependencies:
   build_runner: ^2.4.8
@@ -47,6 +50,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/models/
     - assets/images/

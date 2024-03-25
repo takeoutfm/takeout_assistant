@@ -1,42 +1,42 @@
 // Copyright 2023 defsub
 //
-// This file is part of Takeout.
+// This file is part of TakeoutFM.
 //
-// Takeout is free software: you can redistribute it and/or modify it under the
+// TakeoutFM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU Affero General Public License as published by the Free
 // Software Foundation, either version 3 of the License, or (at your option)
 // any later version.
 //
-// Takeout is distributed in the hope that it will be useful, but WITHOUT ANY
+// TakeoutFM is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 // FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for
 // more details.
 //
 // You should have received a copy of the GNU Affero General Public License
-// along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
+// along with TakeoutFM.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'package:assistant/app/app.dart';
 import 'package:assistant/app/bloc.dart';
 import 'package:assistant/app/context.dart';
 import 'package:assistant/home/widget.dart';
-import 'package:assistant/settings/model.dart';
 import 'package:assistant/settings/settings.dart';
 import 'package:assistant/settings/widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:one_clock/one_clock.dart';
-import 'package:takeout_lib/art/cover.dart';
-import 'package:takeout_lib/player/player.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:takeout_lib/context/bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'connect.dart';
+import 'player.dart';
 
 Future ensureInitialized() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-  await AppBloc.initStorage();
+  await TakeoutBloc.initStorage();
 }
 
 void main() async {
@@ -58,6 +58,15 @@ class AssistantAppState extends State<AssistantApp> {
   Widget build(BuildContext context) {
     return AppBloc().init(context,
         child: MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', ''),
+            ],
             theme: ThemeData.light(useMaterial3: true),
             darkTheme: ThemeData.dark(useMaterial3: true),
             home: Scaffold(
@@ -93,79 +102,68 @@ class AssistantAppState extends State<AssistantApp> {
           itemBuilder: (_) {
             return <PopupMenuEntry<dynamic>>[
               PopupMenuItem(
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                            builder: (_) => SettingsWidget()));
-                  },
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                          builder: (_) => SettingsWidget())),
                   child: ListTile(
                     leading: Icon(Icons.settings),
-                    title: Text('Settings'),
+                    title: Text(context.strings.settingsLabel),
                   )),
               PopupMenuItem(
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(
-                            builder: (_) => LightsWidget()));
-                  },
+                  onTap: () => Navigator.push(context,
+                      MaterialPageRoute<void>(builder: (_) => LightsWidget())),
                   child: ListTile(
                     leading: Icon(Icons.lightbulb),
-                    title: Text('Lights'),
+                    title: Text(context.strings.lights),
                   )),
               if (state.authenticated == true)
                 PopupMenuItem(
-                    onTap: () {
-                      context.logout();
-                    },
+                    onTap: () => context.logout(),
                     child: ListTile(
                       leading: Icon(Icons.logout),
-                      title: Text('Logout'),
+                      title: Text(context.strings.logoutLabel),
                     )),
               if (state.authenticated == false)
                 PopupMenuItem(
-                    onTap: () {
-                      showDialog(
-                          context: context,
-                          builder: (_) {
-                            return Dialog(child: ConnectPage());
-                          });
-                    },
+                    onTap: () => showDialog(
+                        context: context,
+                        builder: (_) {
+                          return Dialog(child: ConnectPage());
+                        }),
                     child: ListTile(
                       leading: Icon(Icons.login),
-                      title: Text('Login'),
+                      title: Text(context.strings.loginLabel),
                     )),
               PopupMenuDivider(),
               PopupMenuItem(
-                  onTap: () {
-                    showAboutDialog(
-                        context: context,
-                        applicationName: 'Takeout Assistant',
-                        applicationVersion: appVersion,
-                        applicationLegalese: 'Copyleft \u00a9 2023-2024 defsub',
-                        children: <Widget>[
-                          InkWell(
-                              child: const Text(
-                                appSource,
-                                style: TextStyle(
-                                    decoration: TextDecoration.underline,
-                                    color: Colors.blueAccent),
-                              ),
-                              onTap: () => launchUrl(Uri.parse(appSource))),
-                          InkWell(
-                              child: const Text(
-                                appHome,
-                                style: TextStyle(
-                                    decoration: TextDecoration.underline,
-                                    color: Colors.blueAccent),
-                              ),
-                              onTap: () => launchUrl(Uri.parse(appHome))),
-                        ]);
-                  },
+                  onTap: () => showAboutDialog(
+                          context: context,
+                          applicationName: appName,
+                          applicationVersion: appVersion,
+                          applicationLegalese:
+                              'Copyleft \u00a9 2023-2024 defsub',
+                          children: <Widget>[
+                            InkWell(
+                                child: const Text(
+                                  appSource,
+                                  style: TextStyle(
+                                      decoration: TextDecoration.underline,
+                                      color: Colors.blueAccent),
+                                ),
+                                onTap: () => launchUrl(Uri.parse(appSource))),
+                            InkWell(
+                                child: const Text(
+                                  appHome,
+                                  style: TextStyle(
+                                      decoration: TextDecoration.underline,
+                                      color: Colors.blueAccent),
+                                ),
+                                onTap: () => launchUrl(Uri.parse(appHome))),
+                          ]),
                   child: ListTile(
                     leading: Icon(Icons.info_outline),
-                    title: Text('About'),
+                    title: Text(context.strings.aboutLabel),
                   )),
             ];
           },
@@ -188,11 +186,11 @@ class AssistantDisplayState extends State<AssistantDisplay> with AppBlocState {
     super.initState();
     appInitState(context);
 
-    final settings = context.settings.state.settings;
-    if (settings.host == 'https://example.com') {
-      // TODO need UI to enter host
-      context.settings.host = 'https://takeout.fm';
-    }
+    // final settings = context.settings.state.settings;
+    // if (settings.host == 'https://example.com') {
+    //   // TODO need UI to enter host
+    //   context.settings.host = 'https://takeout.fm';
+    // }
   }
 
   @override
@@ -204,109 +202,11 @@ class AssistantDisplayState extends State<AssistantDisplay> with AppBlocState {
   @override
   Widget build(BuildContext context) {
     WakelockPlus.enable(); // consider settings
-    return OrientationBuilder(builder: (context, orientation) {
-      final state = context.watch<AssistantSettingsCubit>().state;
-      switch (state.settings.displayType) {
-        case DisplayType.clock:
-          return context.clock.repository.build(context,
-              child: state.settings.showPlayer ? PlayerWidget() : null);
-        case DisplayType.basic:
-          return Center(
-              child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox.shrink(),
-              Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    DigitalClock(
-                      digitalClockTextColor: Colors.white70,
-                      format: state.settings.use24HourClock ? 'HH:mm' : 'h:mm',
-                      textScaleFactor:
-                          orientation == Orientation.landscape ? 8 : 5,
-                      isLive: true,
-                    ),
-                    DigitalClock(
-                      digitalClockTextColor: Colors.white30,
-                      format: 'EEE, MMM d',
-                      textScaleFactor: 2,
-                      isLive: true,
-                    ),
-                    if (state.settings.enableSpeechRecognition)
-                      IconButton(
-                          icon: Icon(Icons.mic),
-                          onPressed: () {
-                            context.assistantSettings.enableSpeechRecognition =
-                                false;
-                          })
-                    else
-                      IconButton(
-                          icon: Icon(Icons.mic_off),
-                          onPressed: () {
-                            context.assistantSettings.enableSpeechRecognition =
-                                true;
-                          })
-                  ]),
-              if (state.settings.showPlayer)
-                PlayerWidget()
-              else
-                SizedBox.shrink(),
-            ],
-          ));
-      }
-    });
-  }
-}
-
-class PlayerWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final state = context.watch<Player>().state;
-    final appState = context.watch<AppCubit>().state;
-    if (state is PlayerInit || state is PlayerReady || state is PlayerStop) {
-      return const SizedBox.shrink();
-    }
-    final title = state.currentTrack?.title ?? '';
-    final creator = state.currentTrack?.creator ?? '';
-    final image = state.currentTrack?.image ?? '';
-    final double? progress =
-        state is PlayerPositionState ? state.progress : null;
-    if (state is PlayerProcessingState) {
-      return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Ink(
-                // color: appState.backgroundColor,
-                child: ListTile(
-                    leading:
-                        image.isNotEmpty ? tileCover(context, image) : null,
-                    title: title.isNotEmpty ? Text(title) : null,
-                    subtitle: creator.isNotEmpty ? Text(creator) : null,
-                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                      IconButton(
-                          icon: state.playing
-                              ? Icon(Icons.pause)
-                              : Icon(Icons.play_arrow),
-                          onPressed: () {
-                            if (state.playing) {
-                              context.player.pause();
-                            } else {
-                              context.player.play();
-                            }
-                          }),
-                      IconButton(
-                          icon: Icon(Icons.skip_next),
-                          onPressed: state.hasNext
-                              ? () => context.player.skipToNext()
-                              : null),
-                    ]))),
-            if (state.spiff.isStream() == false)
-              LinearProgressIndicator(value: progress),
-          ]);
-    }
-    return SizedBox.shrink();
+    final state = context.watch<AssistantSettingsCubit>().state;
+    return context.clock.build(
+          context,
+          child: state.settings.showPlayer ? PlayerWidget() : null,
+        ) ??
+        SizedBox.shrink();
   }
 }

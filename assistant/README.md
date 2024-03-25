@@ -1,4 +1,4 @@
-# Takeout Assistant
+# TakeoutFM Assistant
 
 Offline voice assistant for Takeout with Flutter Bloc & Vosk.
 

@@ -331,6 +331,10 @@ void main() {
       Intent(IntentName.turnOnLight, {Extra.light: 'office desk'}),
       speech.match('en', 'turn on the office desk light'),
     );
+    expect(
+      Intent(IntentName.turnOnLight, {}),
+      speech.match('en', 'flight on'),
+    );
   });
 
   test('turn off light', () {

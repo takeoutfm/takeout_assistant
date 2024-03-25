@@ -1,4 +1,4 @@
-# Takeout Assistant
+# TakeoutFM Assistant
 
 Voice assistant app with offline speech recognition using Vosk that displays a clock and listens for 
 wake-word(s) followed by voice actions that are processed internally or dispatched to other apps 

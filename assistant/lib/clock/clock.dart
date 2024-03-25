@@ -1,19 +1,19 @@
 // Copyright 2023 defsub
 //
-// This file is part of Takeout.
+// This file is part of TakeoutFM.
 //
-// Takeout is free software: you can redistribute it and/or modify it under the
+// TakeoutFM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU Affero General Public License as published by the Free
 // Software Foundation, either version 3 of the License, or (at your option)
 // any later version.
 //
-// Takeout is distributed in the hope that it will be useful, but WITHOUT ANY
+// TakeoutFM is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 // FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for
 // more details.
 //
 // You should have received a copy of the GNU Affero General Public License
-// along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
+// along with TakeoutFM.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'dart:async';
 
@@ -21,42 +21,29 @@ import 'package:assistant/settings/model.dart';
 import 'package:assistant/settings/repository.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:lava_clock/frame.dart';
-import 'package:lava_clock/lava_clock.dart';
-import 'package:lava_clock/model.dart';
+
+import 'basic.dart';
+import 'lava.dart';
 
 class ClockState {
-  final bool enabled;
   final bool paused;
 
-  ClockState({required this.enabled, required this.paused});
+  ClockState({required this.paused});
 
-  ClockState copyWith({bool? enabled, bool? paused}) => ClockState(
-      enabled: enabled ?? this.enabled, paused: paused ?? this.paused);
+  ClockState copyWith({bool? paused}) =>
+      ClockState(paused: paused ?? this.paused);
 
   factory ClockState.initial() {
-    return ClockState(enabled: true, paused: false);
+    return ClockState(paused: false);
   }
 }
 
-class ClockEnable extends ClockState {
-  ClockEnable.from(ClockState state)
-      : super(enabled: true, paused: state.paused);
-}
-
-class ClockDisable extends ClockState {
-  ClockDisable.from(ClockState state)
-      : super(enabled: false, paused: state.paused);
-}
-
 class ClockPause extends ClockState {
-  ClockPause.from(ClockState state)
-      : super(enabled: state.enabled, paused: true);
+  ClockPause.from(ClockState state) : super(paused: true);
 }
 
 class ClockResume extends ClockState {
-  ClockResume.from(ClockState state)
-      : super(enabled: state.enabled, paused: false);
+  ClockResume.from(ClockState state) : super(paused: false);
 }
 
 class ClockCubit extends Cubit<ClockState> {
@@ -64,16 +51,6 @@ class ClockCubit extends Cubit<ClockState> {
 
   ClockCubit(this.repository) : super(ClockState.initial()) {
     repository.listen(stream);
-  }
-
-  void enable() {
-    repository.setEnabled(true);
-    emit(ClockEnable.from(state));
-  }
-
-  void disable() {
-    repository.setEnabled(false);
-    emit(ClockDisable.from(state));
   }
 
   void pause() {
@@ -85,13 +62,19 @@ class ClockCubit extends Cubit<ClockState> {
     repository.setPaused(false);
     emit(ClockResume.from(state));
   }
+
+  Widget? build(BuildContext context, {Widget? child}) =>
+      repository.build(context, child: child);
 }
 
 class ClockRepository {
-  final ClockProvider _provider;
+  ClockProvider? _provider;
+  DisplayType _displayType;
 
-  ClockRepository({ClockProvider? provider})
-      : _provider = provider ?? LavaClockProvider();
+  ClockRepository({DisplayType? displayType})
+      : _displayType = DisplayType.basic {
+    _updateProvider();
+  }
 
   void init(AssistantSettingsRepository settingsRepository) {
     _updateSettings(settingsRepository.settings);
@@ -102,78 +85,41 @@ class ClockRepository {
 
   void _updateSettings(AssistantSettings? settings) {
     if (settings != null) {
-      _provider.use24HourClock(settings.use24HourClock);
+      if (settings.displayType != _displayType) {
+        _displayType = settings.displayType;
+        _updateProvider();
+      }
+    }
+  }
+
+  void _updateProvider() {
+    switch (_displayType) {
+      case DisplayType.lava:
+        _provider = LavaClockProvider();
+      case DisplayType.basic:
+        _provider = BasicClockProvider();
     }
   }
 
   void listen(Stream<ClockState> stream) {
     stream.listen((event) {
       if (event is ClockPause) {
-        _provider.setPaused(true);
+        _provider?.setPaused(true);
       } else if (event is ClockResume) {
-        _provider.setPaused(false);
+        _provider?.setPaused(false);
       }
     });
   }
 
-  void setEnabled(bool enabled) => _provider.setEnabled(enabled);
+  void setPaused(bool paused) => _provider?.setPaused(paused);
 
-  void setPaused(bool paused) => _provider.setPaused(paused);
-
-  Widget build(BuildContext context, {Widget? child}) =>
-      _provider.build(context, child: child);
+  Widget? build(BuildContext context, {Widget? child}) {
+    return _provider?.build(context, child: child);
+  }
 }
 
 abstract class ClockProvider {
   Widget build(BuildContext context, {Widget? child});
 
-  void setEnabled(bool enabled);
-
   void setPaused(bool paused);
-
-  void use24HourClock(bool enabled);
-}
-
-class LavaClockProvider extends ClockProvider {
-  late ClockFrame clock;
-  final model = ClockModel();
-
-  @override
-  Widget build(BuildContext context, {Widget? child}) {
-    clock = ClockFrame(
-        key: clockFrameKey,
-        child: (controller) => Stack(
-              fit: StackFit.expand,
-              children: [
-                LavaClock(model, animationController: controller),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: child,
-                )
-              ],
-            ));
-    return clock;
-  }
-
-  @override
-  void use24HourClock(bool enable) {
-    model.is24HourFormat = enable;
-  }
-
-  @override
-  void setEnabled(bool enabled) {}
-
-  @override
-  void setPaused(bool paused) {
-    final controller = clockFrameKey.currentState?.animationController;
-    if (paused) {
-      if (controller?.isAnimating == true) {
-        controller?.stop();
-      }
-    } else {
-      if (controller?.isAnimating == false) {
-        controller?.repeat();
-      }
-    }
-  }
 }

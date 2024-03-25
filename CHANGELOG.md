@@ -1,3 +1,11 @@
+## 0.4.1
+
+- Move basic clock to provider
+- Pause clock animations when dark
+- Show battery in basic clock
+- Fix speech init
+- l10n
+
 ## 0.4.0
 
 - Bridge discover & refresh settings

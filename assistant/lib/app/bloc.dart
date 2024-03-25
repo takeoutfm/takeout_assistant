@@ -1,19 +1,19 @@
 // Copyright 2023 defsub
 //
-// This file is part of Takeout.
+// This file is part of TakeoutFM.
 //
-// Takeout is free software: you can redistribute it and/or modify it under the
+// TakeoutFM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU Affero General Public License as published by the Free
 // Software Foundation, either version 3 of the License, or (at your option)
 // any later version.
 //
-// Takeout is distributed in the hope that it will be useful, but WITHOUT ANY
+// TakeoutFM is distributed in the hope that it will be useful, but WITHOUT ANY
 // WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 // FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for
 // more details.
 //
 // You should have received a copy of the GNU Affero General Public License
-// along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
+// along with TakeoutFM.  If not, see <https://www.gnu.org/licenses/>.
 
 import 'dart:io';
 
@@ -21,6 +21,7 @@ import 'package:android_intent_plus/android_intent.dart';
 import 'package:assistant/ambient/light.dart';
 import 'package:assistant/app/context.dart';
 import 'package:assistant/audio/volume.dart';
+import 'package:assistant/battery/battery.dart';
 import 'package:assistant/clock/clock.dart';
 import 'package:assistant/home/home.dart';
 import 'package:assistant/home/repository.dart';
@@ -53,25 +54,7 @@ import 'package:screen_brightness/screen_brightness.dart';
 import 'app.dart';
 
 class AppBloc extends TakeoutBloc {
-  static late Directory _appDir;
-
-  static Future<void> initStorage() async {
-    _appDir = await getApplicationDocumentsDirectory();
-    final storageDir = Directory('${_appDir.path}/state');
-    HydratedBloc.storage =
-        await HydratedStorage.build(storageDirectory: storageDir);
-  }
-
   static final intents = SpeechModels();
-
-  Widget init(BuildContext context, {required Widget child}) {
-    return MultiRepositoryProvider(
-        providers: repositories(_appDir),
-        child: MultiBlocProvider(
-            providers: blocs(),
-            child: MultiBlocListener(
-                listeners: listeners(context), child: child)));
-  }
 
   @override
   ClientRepository createClientRepository({
@@ -82,7 +65,7 @@ class AppBloc extends TakeoutBloc {
   }) {
     return super.createClientRepository(
       userAgent:
-          'Takeout-Assistant/$appVersion (takeoutfm.com; ${Platform.operatingSystem})',
+          'TakeoutFM-Assistant/$appVersion (takeoutfm.com; ${Platform.operatingSystem})',
       settingsRepository: settingsRepository,
       tokenRepository: tokenRepository,
       jsonCacheRepository: jsonCacheRepository,
@@ -93,12 +76,13 @@ class AppBloc extends TakeoutBloc {
   List<SingleChildWidget> repositories(Directory directory) {
     final settingsRepository = AssistantSettingsRepository();
     final ambientLightRepository = AmbientLightRepository();
-    final speechRepository =
-        SpeechRepository(settingsRepository: settingsRepository);
+    final speechRepository = SpeechRepository();
     final volumeRepository = VolumeRepository();
     final torchRepository = TorchLightRepository();
-    final clockRepository = ClockRepository();
+    final clockRepository =
+        ClockRepository(displayType: settingsRepository.settings?.displayType);
     final homeRepository = HomeRepository();
+    final batteryRepository = BatteryRepository();
 
     return [
       ...super.repositories(directory),
@@ -109,6 +93,7 @@ class AppBloc extends TakeoutBloc {
       RepositoryProvider(create: (_) => clockRepository),
       RepositoryProvider(create: (_) => settingsRepository),
       RepositoryProvider(create: (_) => homeRepository),
+      RepositoryProvider(create: (_) => batteryRepository),
     ];
   }
 
@@ -131,7 +116,7 @@ class AppBloc extends TakeoutBloc {
       ),
       BlocProvider(
         lazy: false,
-        create: (context) => SpeechCubit(context.read<SpeechRepository>()),
+        create: (context) => SpeechCubit(),
       ),
       BlocProvider(
         create: (context) => VolumeCubit(context.read<VolumeRepository>()),
@@ -159,8 +144,15 @@ class AppBloc extends TakeoutBloc {
             context
                 .read<ClockRepository>()
                 .init(context.read<AssistantSettingsRepository>());
+            context
+                .read<SpeechRepository>()
+                .init(context.read<AssistantSettingsRepository>());
+            context.read<SpeechCubit>().init(context.read<SpeechRepository>());
             return settings;
           }),
+      BlocProvider(
+          lazy: false,
+          create: (context) => BatteryCubit(context.read<BatteryRepository>())),
     ];
   }
 
@@ -175,14 +167,16 @@ class AppBloc extends TakeoutBloc {
       }),
       BlocListener<AmbientLightCubit, AmbientLightState>(
           listenWhen: (prevState, state) {
-        return prevState.isLight() != state.isLight();
+        return prevState.isLight != state.isLight;
       }, listener: (context, state) {
-        if (state.isDark()) {
-          print('dimming screen');
+        if (state.isDark) {
+          print('dimming screen (${state.lux})');
           ScreenBrightness.instance.setScreenBrightness(0.0);
-        } else if (state.isLight()) {
-          print('brightening screen');
-          ScreenBrightness.instance.setScreenBrightness(1.0);
+          context.clock.pause();
+        } else if (state.isLight) {
+          print('brightening screen ${state.lux})');
+          ScreenBrightness.instance.setScreenBrightness(0.5);
+          context.clock.resume();
         }
       }),
       BlocListener<VolumeCubit, VolumeState>(listener: (context, state) {
@@ -284,23 +278,22 @@ class AppBloc extends TakeoutBloc {
     final language = context.assistantSettings.state.settings.language;
     final intent = intents.match(language, state.text);
     if (intent != null) {
+      acknowledge(context, state.text);
       print(intent.name);
       print(intent.extras);
       _handleIntent(context, language, intent);
     } else {
-      print('unmatched - ${state.text}');
+      ignore(context, state.text);
     }
   }
 
   void _handleIntent(BuildContext context, String language, Intent intent) {
-    acknowledge(context, intents.describe(language, intent) ?? 'ok').then((_) {
-      _handleAndroid(context, intent) ||
-          _handlePlaylist(context, intent) ||
-          _handlePlayer(context, intent) ||
-          _handleVolume(context, intent) ||
-          _handleTorch(context, intent) ||
-          _handleLights(context, intent);
-    });
+    _handleAndroid(context, intent) ||
+        _handlePlaylist(context, intent) ||
+        _handlePlayer(context, intent) ||
+        _handleVolume(context, intent) ||
+        _handleTorch(context, intent) ||
+        _handleLights(context, intent);
   }
 
   bool _handleAndroid(BuildContext context, Intent intent) {
@@ -415,6 +408,10 @@ class AppBloc extends TakeoutBloc {
       _doLight(context, name: name, on: true);
     } else if (intent.name == IntentName.turnOffLight) {
       _doLight(context, name: name, on: false);
+    } else if (intent.name == IntentName.turnOnAllLights) {
+      _doAllLights(context, on: true);
+    } else if (intent.name == IntentName.turnOffAllLights) {
+      _doAllLights(context, on: false);
     } else if (intent.name == IntentName.setLightBrightness) {
       final brightness = intent[Extra.brightnessValue];
       _doLight(context, name: name, brightness: brightness);
@@ -427,9 +424,8 @@ class AppBloc extends TakeoutBloc {
     return handled;
   }
 
-  void _doLight(BuildContext context,
-      {String? name, bool? on, double? brightness, Color? color}) {
-    final defaultRoom = context.assistantSettings.state.settings.homeRoom;
+  void _doAllLights(BuildContext context,
+      {bool? on, double? brightness, Color? color}) {
     final doit = (light) {
       if (on == true) {
         context.home.lightOn(light);
@@ -443,63 +439,94 @@ class AppBloc extends TakeoutBloc {
         context.home.lightColor(light, color);
       }
     };
+    for (var light in context.home.state.lights) {
+      doit(light);
+    }
+  }
+}
 
-    if (name != null) {
-      String? defaultRoomLight;
-      if (defaultRoom != null) {
-        defaultRoomLight = '${defaultRoom.toLowerCase()} ${name.toLowerCase()}';
+void _doLight(BuildContext context,
+    {String? name, bool? on, double? brightness, Color? color}) {
+  final defaultRoom = context.assistantSettings.state.settings.homeRoom;
+  final doit = (light) {
+    if (on == true) {
+      context.home.lightOn(light);
+    } else if (on == false) {
+      context.home.lightOff(light);
+    }
+    if (brightness != null) {
+      context.home.lightBrightness(light, brightness);
+    }
+    if (color != null) {
+      context.home.lightColor(light, color);
+    }
+  };
+
+  if (name != null) {
+    String? defaultRoomLight;
+    if (defaultRoom != null) {
+      defaultRoomLight = '${defaultRoom.toLowerCase()} ${name.toLowerCase()}';
+    }
+    for (var light in context.home.state.lights) {
+      if (light.qualifiedNames.contains(name.toLowerCase()) ||
+          light.qualifiedNames.contains(defaultRoomLight)) {
+        print('qualified matched ${light.name}');
+        doit(light);
       }
-      for (var light in context.home.state.lights) {
-        if (light.qualifiedNames.contains(name.toLowerCase()) ||
-            light.qualifiedNames.contains(defaultRoomLight)) {
-          print('qualified matched ${light.name}');
-          doit(light);
-        }
-      }
-    } else {
-      for (var light in context.home.state.lights) {
-        if (light.room == defaultRoom) {
-          print('room matched ${light.name}');
-          doit(light);
-        }
+    }
+  } else {
+    for (var light in context.home.state.lights) {
+      if (light.room == defaultRoom) {
+        print('room matched ${light.name}');
+        doit(light);
       }
     }
   }
+}
 
-  void _volumeUp(BuildContext context) {
-    final factor = 0.4;
-    var v = context.volume.state.volume;
-    if (v == 0) {
-      v = factor;
-    } else {
-      v += v * factor;
-    }
-    context.volume.setVolume(v);
+void _volumeUp(BuildContext context) {
+  final factor = 0.4;
+  var v = context.volume.state.volume;
+  if (v == 0) {
+    v = factor;
+  } else {
+    v += v * factor;
   }
+  context.volume.setVolume(v);
+}
 
-  void _volumeDown(BuildContext context) {
-    final factor = 0.25;
-    var v = context.volume.state.volume;
-    v -= v * factor;
-    if (v < 0) {
-      v = 0;
-    }
-    context.volume.setVolume(v);
+void _volumeDown(BuildContext context) {
+  final factor = 0.25;
+  var v = context.volume.state.volume;
+  v -= v * factor;
+  if (v < 0) {
+    v = 0;
   }
+  context.volume.setVolume(v);
+}
 
-  void _setVolume(BuildContext context, double volume) {
-    context.volume.setVolume(volume);
-  }
+void _setVolume(BuildContext context, double volume) {
+  context.volume.setVolume(volume);
+}
 
-  Future<void> acknowledge(BuildContext context, String msg) async {
-    Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.CENTER,
-        backgroundColor: Colors.white,
-        textColor: Colors.black,
-        fontSize: 16.0);
-  }
+Future<void> acknowledge(BuildContext context, String msg) async {
+  Fluttertoast.showToast(
+      msg: msg,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.white,
+      textColor: Colors.black,
+      fontSize: 16.0);
+}
+
+Future<void> ignore(BuildContext context, String msg) async {
+  Fluttertoast.showToast(
+      msg: '* $msg',
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.white,
+      textColor: Colors.black,
+      fontSize: 16.0);
 }
 
 mixin AppBlocState {

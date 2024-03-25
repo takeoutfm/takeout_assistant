@@ -1,19 +1,19 @@
 # Copyright 2023 defsub
 #
-# This file is part of Takeout.
+# This file is part of TakeoutFM.
 #
-# Takeout is free software: you can redistribute it and/or modify it under the
+# TakeoutFM is free software: you can redistribute it and/or modify it under the
 # terms of the GNU Affero General Public License as published by the Free
 # Software Foundation, either version 3 of the License, or (at your option)
 # any later version.
 #
-# Takeout is distributed in the hope that it will be useful, but WITHOUT ANY
+# TakeoutFM is distributed in the hope that it will be useful, but WITHOUT ANY
 # WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for
 # more details.
 #
 # You should have received a copy of the GNU Affero General Public License
-# along with Takeout.  If not, see <https://www.gnu.org/licenses/>.
+# along with TakeoutFM.  If not, see <https://www.gnu.org/licenses/>.
 
 FLUTTER = flutter
 
@@ -23,7 +23,9 @@ APKSIGNER = apksigner
 
 GIT_VERSION ?= $(shell git log --format="%h" -n 1)
 
-SOURCES = $(wildcard lib/*.dart lib/*/*.dart)
+TAKEOUT_LIB = ../../takeout_app/takeout_lib
+
+SOURCES = $(wildcard ${TAKEOUT_LIB}/lib/*.dart ${TAKEOUT_LIB}/lib/*/*.dart lib/*.dart lib/*/*.dart)
 
 RESOURCES = $(wildcard lib/l10n/*.arb)
 
